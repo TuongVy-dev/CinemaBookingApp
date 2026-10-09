@@ -91,8 +91,16 @@ class AccountViewModel extends ChangeNotifier {
   }
 
   Future<bool> forgotPassword(String email) async {
+    _setLoading(clearError: true);
     final result = await _repository.forgotPassword(email);
-    return result is Success<String>;
+    if (result case Success<String>()) {
+      _setLoading(value: false);
+      return true;
+    }
+
+    _errorMessage = (result as FailureResult<String>).failure.message;
+    _setLoading(value: false);
+    return false;
   }
 
   Future<bool> resetPassword({
