@@ -5,6 +5,8 @@ import '../core/ui/cinema_widgets.dart';
 import '../features/account/presentation/screens/account_screen.dart';
 import '../features/account/presentation/screens/login_registration_screen.dart';
 import '../features/account/presentation/screens/reset_password_screen.dart';
+import '../features/movies/presentation/screens/movie_detail_screen.dart';
+import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -33,7 +35,20 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/movies',
-      builder: (context, state) => const _FeaturePlaceholder(title: 'Movies'),
+      builder: (context, state) => const MovieDiscoveryScreen(),
+      routes: [
+        GoRoute(
+          path: ':movieId',
+          builder: (context, state) =>
+              MovieDetailScreen(movieId: state.pathParameters['movieId']!),
+        ),
+      ],
+    ),
+    // Placeholder cho TV3; MovieDetailScreen chỉ truyền movieId.
+    GoRoute(
+      path: '/showtimes/:movieId',
+      builder: (context, state) =>
+          const _FeaturePlaceholder(title: 'Showtimes'),
     ),
     GoRoute(
       path: '/tickets',
