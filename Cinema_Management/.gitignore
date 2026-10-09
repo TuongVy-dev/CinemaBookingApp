@@ -4,6 +4,8 @@ application-local.properties
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+Cinema_Management/.vscode/launch.json
+CinemaBookingApp/.vscode/launch.json
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
