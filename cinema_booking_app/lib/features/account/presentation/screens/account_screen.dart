@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -57,6 +58,18 @@ class AccountScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
+                if (kDebugMode) ...[
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.bug_report_outlined),
+                      title: const Text('Kiểm tra tóm tắt đơn'),
+                      subtitle: const Text('Chỉ dùng khi phát triển'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => c.push('/booking-summary-debug'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),

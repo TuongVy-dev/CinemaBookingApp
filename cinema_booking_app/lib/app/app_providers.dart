@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 import '../features/account/presentation/view_models/account_view_model.dart';
+import '../features/bookings_and_payment/presentation/view_models/booking_summary_view_model.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({super.key, required this.child});
@@ -12,6 +13,9 @@ class AppProviders extends StatelessWidget {
     providers: [
       ChangeNotifierProvider<AccountViewModel>(
         create: (_) => AccountViewModel()..checkSession(),
+      ),
+      ChangeNotifierProvider<BookingSummaryViewModel>(
+        create: (_) => BookingSummaryViewModel(),
       ),
     ],
     child: child,

@@ -18,4 +18,6 @@ class ApiConfig {
   static const register = '/api/auth/register';
   static const logout = '/api/auth/logout';
   static const me = '/api/auth/me';
+  static const customerBookings = '/api/customer/bookings';
+  static const customerBookingPreview = '$customerBookings/preview';
 }
