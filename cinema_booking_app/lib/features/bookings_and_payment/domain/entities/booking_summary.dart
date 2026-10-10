@@ -82,3 +82,15 @@ class BookingQuote {
   final int total;
   final AppliedVoucher? voucher;
 }
+
+class CreatedBooking {
+  const CreatedBooking({
+    required this.bookingId,
+    required this.status,
+    required this.totalAmount,
+  });
+
+  final String bookingId;
+  final String status;
+  final int totalAmount;
+}

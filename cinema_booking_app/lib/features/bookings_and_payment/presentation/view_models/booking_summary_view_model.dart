@@ -19,10 +19,12 @@ class BookingSummaryViewModel extends ChangeNotifier {
   BookingQuote? _quote;
   String? _error;
   bool _loading = false;
+  bool _submitting = false;
 
   BookingQuote? get quote => _quote;
   String? get error => _error;
   bool get loading => _loading;
+  bool get submitting => _submitting;
 
   Future<void> preview(BookingSelection selection) async {
     _loading = true;
@@ -37,5 +39,27 @@ class BookingSummaryViewModel extends ChangeNotifier {
     }
     _loading = false;
     notifyListeners();
+  }
+
+  Future<CreatedBooking?> create(
+    BookingSelection selection, {
+    required String idempotencyKey,
+  }) async {
+    if (_submitting) return null;
+    _submitting = true;
+    _error = null;
+    notifyListeners();
+    final result = await _repository.create(
+      selection,
+      idempotencyKey: idempotencyKey,
+    );
+    _submitting = false;
+    if (result case Success<CreatedBooking>(:final data)) {
+      notifyListeners();
+      return data;
+    }
+    _error = (result as FailureResult<CreatedBooking>).failure.message;
+    notifyListeners();
+    return null;
   }
 }

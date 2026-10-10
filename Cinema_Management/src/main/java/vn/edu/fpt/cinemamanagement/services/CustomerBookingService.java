@@ -3,17 +3,24 @@ package vn.edu.fpt.cinemamanagement.services;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import vn.edu.fpt.cinemamanagement.dto.request.CustomerBookingRequestDTO;
+import vn.edu.fpt.cinemamanagement.dto.response.CustomerBookingCreatedResponseDTO;
 import vn.edu.fpt.cinemamanagement.dto.response.CustomerBookingQuoteResponseDTO;
+import vn.edu.fpt.cinemamanagement.entities.Booking;
+import vn.edu.fpt.cinemamanagement.entities.BookingDetail;
 import vn.edu.fpt.cinemamanagement.entities.Concession;
 import vn.edu.fpt.cinemamanagement.entities.ShowtimeSeat;
 import vn.edu.fpt.cinemamanagement.entities.Voucher;
+import vn.edu.fpt.cinemamanagement.enums.BookingStatus;
 import vn.edu.fpt.cinemamanagement.enums.SeatStatus;
+import vn.edu.fpt.cinemamanagement.repositories.BookingDetailRepository;
+import vn.edu.fpt.cinemamanagement.repositories.BookingRepository;
 import vn.edu.fpt.cinemamanagement.repositories.ConcessionRepository;
 import vn.edu.fpt.cinemamanagement.repositories.ShowtimeRepository;
 import vn.edu.fpt.cinemamanagement.repositories.ShowtimeSeatRepository;
 import vn.edu.fpt.cinemamanagement.repositories.VoucherRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +28,8 @@ import java.util.Objects;
 /** Prices every customer selection on the server before persisting a booking. */
 @Service
 public class CustomerBookingService {
+    private final BookingRepository bookingRepository;
+    private final BookingDetailRepository bookingDetailRepository;
     private final ShowtimeRepository showtimeRepository;
     private final ShowtimeSeatRepository showtimeSeatRepository;
     private final ConcessionRepository concessionRepository;
@@ -28,12 +37,16 @@ public class CustomerBookingService {
     private final ISeatPricingService seatPricingService;
 
     public CustomerBookingService(
+            BookingRepository bookingRepository,
+            BookingDetailRepository bookingDetailRepository,
             ShowtimeRepository showtimeRepository,
             ShowtimeSeatRepository showtimeSeatRepository,
             ConcessionRepository concessionRepository,
             VoucherRepository voucherRepository,
             ISeatPricingService seatPricingService
     ) {
+        this.bookingRepository = bookingRepository;
+        this.bookingDetailRepository = bookingDetailRepository;
         this.showtimeRepository = showtimeRepository;
         this.showtimeSeatRepository = showtimeSeatRepository;
         this.concessionRepository = concessionRepository;
@@ -45,6 +58,56 @@ public class CustomerBookingService {
     public CustomerBookingQuoteResponseDTO preview(CustomerBookingRequestDTO request) {
         PricedSelection selection = price(request);
         return selection.toQuote();
+    }
+
+    @Transactional
+    public synchronized CustomerBookingCreatedResponseDTO createBooking(
+            String customerId,
+            CustomerBookingRequestDTO request
+    ) {
+        PricedSelection selection = price(request);
+        Booking booking = new Booking();
+        booking.setId(nextBookingId());
+        booking.setUserId(customerId);
+        booking.setVoucherId(selection.voucher == null ? null : selection.voucher.getVoucherId());
+        booking.setStatus(BookingStatus.BOOKED);
+        booking.setCreatedAt(LocalDateTime.now());
+        booking.setTotalAmount(selection.total);
+
+        List<BookingDetail> details = new ArrayList<>();
+        int detailNumber = nextBookingDetailNumber();
+        for (ShowtimeSeat seat : selection.seats) {
+            BigDecimal unitPrice = seatPricingService.calculatePrice(seat.getTemplateSeat().getSeatType());
+            BookingDetail detail = new BookingDetail();
+            detail.setBookingDetailId(formatBookingDetailId(detailNumber++));
+            detail.setBooking(booking);
+            detail.setItemType("SEAT");
+            detail.setShowtimeSeat(seat);
+            detail.setQuantity(1);
+            detail.setUnitPrice(unitPrice);
+            details.add(detail);
+            seat.setStatus(SeatStatus.PENDING);
+        }
+        for (ConcessionLine line : selection.concessions) {
+            BookingDetail detail = new BookingDetail();
+            detail.setBookingDetailId(formatBookingDetailId(detailNumber++));
+            detail.setBooking(booking);
+            detail.setItemType("CONCESSION");
+            detail.setConcession(line.concession);
+            detail.setQuantity(line.quantity);
+            detail.setUnitPrice(line.concession.getPrice());
+            details.add(detail);
+        }
+        booking.setBookingDetails(details);
+        bookingRepository.save(booking);
+        showtimeSeatRepository.saveAll(selection.seats);
+
+        if (selection.voucher != null) {
+            selection.voucher.setUsedCount(selection.voucher.getUsedCount() + 1);
+            voucherRepository.save(selection.voucher);
+        }
+        return new CustomerBookingCreatedResponseDTO(
+                booking.getId(), booking.getStatus().name(), booking.getTotalAmount());
     }
 
     private PricedSelection price(CustomerBookingRequestDTO request) {
@@ -125,6 +188,18 @@ public class CustomerBookingService {
         if (clean.size() != seatIds.size()) throw new IllegalArgumentException("Danh sách ghế không hợp lệ.");
         return clean;
     }
+
+    private String nextBookingId() {
+        Booking last = bookingRepository.findTopByOrderByIdDesc();
+        return last == null ? "BK000001" : String.format("BK%06d", Integer.parseInt(last.getId().substring(2)) + 1);
+    }
+
+    private int nextBookingDetailNumber() {
+        BookingDetail last = bookingDetailRepository.findTopByOrderByBookingDetailIdDesc();
+        return last == null ? 1 : Integer.parseInt(last.getBookingDetailId().substring(2)) + 1;
+    }
+
+    private String formatBookingDetailId(int number) { return String.format("BD%06d", number); }
 
     private String seatCode(ShowtimeSeat seat) { return seat.getTemplateSeat().getRowLabel() + seat.getTemplateSeat().getSeatNumber(); }
 

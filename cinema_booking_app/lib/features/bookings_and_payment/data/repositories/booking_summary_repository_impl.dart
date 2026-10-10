@@ -28,6 +28,26 @@ class BookingSummaryRepositoryImpl implements BookingSummaryRepository {
     }
   }
 
+  @override
+  Future<ApiResult<CreatedBooking>> create(
+    BookingSelection selection, {
+    required String idempotencyKey,
+  }) async {
+    try {
+      final response = await _apiService.create(
+        CustomerBookingRequestDto(selection).toJson(),
+        idempotencyKey: idempotencyKey,
+      );
+      return ApiResult.success(
+        CreatedBookingDto(_asMap(response.data)).toEntity(),
+      );
+    } on DioException catch (error) {
+      return ApiResult.failure(_failure(error));
+    } catch (error) {
+      return ApiResult.failure(Failure(error.toString()));
+    }
+  }
+
   Map<String, dynamic> _asMap(dynamic data) => data is Map
       ? Map<String, dynamic>.from(data)
       : throw const FormatException('Phản hồi booking không hợp lệ.');

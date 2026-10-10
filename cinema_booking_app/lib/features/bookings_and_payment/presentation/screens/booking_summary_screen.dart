@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +21,7 @@ class BookingSummaryScreen extends StatefulWidget {
 class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   late final TextEditingController _voucherController;
   late BookingSelection _selection;
+  late String _idempotencyKey;
 
   @override
   void initState() {
@@ -26,6 +30,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     _voucherController = TextEditingController(
       text: _selection.voucherCode ?? '',
     );
+    _idempotencyKey = _newIdempotencyKey();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BookingSummaryViewModel>().preview(_selection);
     });
@@ -39,7 +44,28 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   void _refreshQuote({String? voucherCode}) {
     _selection = _selection.copyWith(voucherCode: voucherCode);
+    _idempotencyKey = _newIdempotencyKey();
     context.read<BookingSummaryViewModel>().preview(_selection);
+  }
+
+  Future<void> _createBooking() async {
+    final created = await context.read<BookingSummaryViewModel>().create(
+      _selection,
+      idempotencyKey: _idempotencyKey,
+    );
+    if (!mounted) return;
+    if (created == null) {
+      final message = context.read<BookingSummaryViewModel>().error;
+      if (message != null) showCinemaMessage(context, message, isError: true);
+      return;
+    }
+    context.go('/booking-created', extra: created);
+  }
+
+  String _newIdempotencyKey() {
+    final random = Random.secure();
+    return '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-'
+        '${random.nextInt(1 << 32).toRadixString(36)}';
   }
 
   @override
@@ -95,6 +121,23 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   textAlign: TextAlign.center,
                 ),
               ],
+            ),
+      bottomNavigationBar: quote == null
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton(
+                  onPressed: viewModel.submitting ? null : _createBooking,
+                  child: viewModel.submitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text('Xác nhận · ${_vnd(quote.total)}'),
+                ),
+              ),
             ),
     );
   }

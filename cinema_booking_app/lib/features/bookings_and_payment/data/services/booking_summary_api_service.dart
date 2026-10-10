@@ -10,4 +10,13 @@ class BookingSummaryApiService {
 
   Future<Response<dynamic>> preview(Map<String, dynamic> request) =>
       _dio.post(ApiConfig.customerBookingPreview, data: request);
+
+  Future<Response<dynamic>> create(
+    Map<String, dynamic> request, {
+    required String idempotencyKey,
+  }) => _dio.post(
+    ApiConfig.customerBookings,
+    data: request,
+    options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+  );
 }

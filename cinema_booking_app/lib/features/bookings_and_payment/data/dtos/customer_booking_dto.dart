@@ -60,4 +60,16 @@ class BookingQuoteDto {
   );
 }
 
+class CreatedBookingDto {
+  const CreatedBookingDto(this._json);
+
+  final Map<String, dynamic> _json;
+
+  CreatedBooking toEntity() => CreatedBooking(
+    bookingId: _json['bookingId']?.toString() ?? '',
+    status: _json['status']?.toString() ?? '',
+    totalAmount: _money(_json['totalAmount']),
+  );
+}
+
 int _money(dynamic value) => value is num ? value.round() : 0;
