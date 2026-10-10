@@ -14,7 +14,7 @@ class BookingCreatedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Đặt vé thành công')),
+      appBar: AppBar(title: const Text('Tạo đơn hàng')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -28,13 +28,13 @@ class BookingCreatedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Đơn của bạn đã được tạo',
+                'Đơn hàng đã được tạo',
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               const Text(
-                'Hãy thanh toán để hoàn tất và phát hành vé.',
+                'Đơn đang chờ thanh toán. Thanh toán thành công sẽ phát hành vé.',
                 style: TextStyle(color: CinemaColors.muted),
                 textAlign: TextAlign.center,
               ),
