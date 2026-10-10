@@ -18,7 +18,7 @@ public interface CustomerRepository extends JpaRepository<Customer,String> {
     boolean existsByPhone(String phone);
     boolean existsByUsername(String username);
     boolean existsByPassword(String password);
-    @Query(value = "SELECT TOP 1 user_id FROM Customer ORDER BY user_id DESC", nativeQuery = true)
+    @Query(value = "SELECT TOP 1 user_id FROM Customer WHERE user_id LIKE 'CS%' ORDER BY user_id DESC", nativeQuery = true)
     String findLastCustomerId();
     //login
     Optional<Customer>  findByUsername(String username);
