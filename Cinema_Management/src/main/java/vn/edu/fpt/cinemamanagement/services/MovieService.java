@@ -636,6 +636,11 @@ public class MovieService {
         return movieRepository.findByReleaseDateGreaterThan(LocalDate.now(), pageable);
     }
 
+    // Toàn bộ phim sắp chiếu (release_date > hôm nay), phim chiếu sớm nhất đứng trước.
+    public List<Movie> getComingSoonMovies() {
+        return movieRepository.findByReleaseDateGreaterThanOrderByReleaseDateAsc(LocalDate.now());
+    }
+
     public boolean isMovieNowShowing(Movie movie, List<Movie> nowShowingMovies) {
         if (movie == null || nowShowingMovies == null) return false;
         return nowShowingMovies.stream()
