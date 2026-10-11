@@ -1,14 +1,20 @@
 class ApiConfig {
   ApiConfig._();
 
-  static String _baseUrl = 'http://10.0.2.2:8081';
+  static const String _defaultBaseUrl = 'http://10.0.2.2:8081';
+  static String _baseUrl = _defaultBaseUrl;
 
   static String get baseUrl => _baseUrl;
 
   static void configure({String? baseUrl}) {
-    if (baseUrl != null && baseUrl.trim().isNotEmpty) {
-      _baseUrl = baseUrl.trim().replaceFirst(RegExp(r'/$'), '');
+    final trimmedBaseUrl = baseUrl?.trim();
+    if (trimmedBaseUrl != null && trimmedBaseUrl.isNotEmpty) {
+      _baseUrl = trimmedBaseUrl.replaceAll(RegExp(r'/+$'), '');
     }
+  }
+
+  static void reset() {
+    _baseUrl = _defaultBaseUrl;
   }
 
   static const login = '/api/auth/login';
@@ -22,5 +28,11 @@ class ApiConfig {
   static const customerBookingPreview = '$customerBookings/preview';
 
   //Ngan
-  static const showtimes = '/api/showtimes';
+  static const showtimes = '/api/showtimes/movie';
+
+  static String showtimesFor({
+    required String movieId,
+    required String date,
+  }) =>
+      '/api/showtimes/movie/$movieId?date=$date';
 }

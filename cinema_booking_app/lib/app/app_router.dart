@@ -10,12 +10,19 @@ import '../features/bookings_and_payment/presentation/screens/booking_created_sc
 import '../features/bookings_and_payment/presentation/screens/booking_summary_debug_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_summary_screen.dart';
 
+import '../features/showtime/presentation/screens/showtime_screen.dart';
+import '../features/showtime/presentation/screens/movie_demo_screen.dart';
+
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginRegistrationScreen(),
+    ),
+    GoRoute(
+      path: '/movies',
+      builder: (context, state) => const MoviesDemoScreen(),
     ),
     GoRoute(
       path: '/account',
@@ -35,9 +42,15 @@ final appRouter = GoRouter(
         );
       },
     ),
+
     GoRoute(
-      path: '/movies',
-      builder: (context, state) => const _FeaturePlaceholder(title: 'Movies'),
+      path: '/showtimes/:movieId',
+      builder: (context, state) => ShowtimeSelectionScreen(
+        movieId: state.pathParameters['movieId']!,
+        movieTitle: state.extra as String? ?? 'Chọn suất chiếu',
+        movieDuration: 130,
+        ageRating: 'T16',
+      ),
     ),
     GoRoute(
       path: '/tickets',
