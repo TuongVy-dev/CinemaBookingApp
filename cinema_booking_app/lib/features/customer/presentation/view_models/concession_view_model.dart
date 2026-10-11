@@ -16,6 +16,33 @@ class ConcessionsViewModel extends ChangeNotifier {
   bool _loading = false;
   bool _disposed = false;
   int _loadRequest = 0;
+  String? _sessionKey;
+  bool _sessionInitialized = false;
+
+  void syncSession(String? sessionKey) {
+    if (_disposed || (_sessionInitialized && _sessionKey == sessionKey)) {
+      return;
+    }
+
+    _sessionInitialized = true;
+    _sessionKey = sessionKey;
+
+    Future<void>.microtask(() async {
+      if (_disposed || _sessionKey != sessionKey) {
+        return;
+      }
+
+      reset(clearCatalog: true);
+
+      if (sessionKey == null) {
+        error = 'Đăng nhập trước để tải danh mục bắp/nước.';
+        notifyListeners();
+        return;
+      }
+
+      await load();
+    });
+  }
 
   bool get busy => _loading;
 

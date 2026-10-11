@@ -22,7 +22,7 @@ class ConcessionCatalogScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Đăng nhập',
-            onPressed: () => context.push('/catalog-login'),
+            onPressed: () => context.push('/login'),
             icon: const Icon(Icons.login),
           ),
           IconButton(
