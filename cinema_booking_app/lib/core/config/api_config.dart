@@ -18,4 +18,7 @@ class ApiConfig {
   static const register = '/api/auth/register';
   static const logout = '/api/auth/logout';
   static const me = '/api/auth/me';
+
+  //Ngan
+  static const showtimes = '/api/showtimes';
 }
