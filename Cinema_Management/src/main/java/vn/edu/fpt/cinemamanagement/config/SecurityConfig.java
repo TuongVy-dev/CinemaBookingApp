@@ -84,7 +84,7 @@ public class SecurityConfig {
                         .requestMatchers("/staff_home", "/cashier/**")
                         .hasAnyAuthority("ROLE_CASHIER_STAFF", "ROLE_REDEMPTION_STAFF")
                         .requestMatchers(HttpMethod.GET, "/api/concessions")
-                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_CASHIER_STAFF")
+                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_CASHIER_STAFF", "ROLE_USER")
                         .requestMatchers("/api/concessions/**")
                         .hasAuthority("ROLE_ADMIN")
                         // Các URL khác thì cần đăng nhập
