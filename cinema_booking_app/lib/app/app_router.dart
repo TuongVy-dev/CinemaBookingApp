@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/customer/presentation/screens/concession_catalog_screen.dart';
+import '../features/customer/presentation/screens/concession_cart_screen.dart';
 import '../core/ui/cinema_widgets.dart';
 import '../features/account/presentation/screens/account_screen.dart';
 import '../features/account/presentation/screens/login_registration_screen.dart';
@@ -15,6 +17,14 @@ import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/concessions',
+      builder: (context, state) => const ConcessionCatalogScreen(),
+    ),
+    GoRoute(
+      path: '/cart',
+      builder: (context, state) => const ConcessionCartScreen(),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginRegistrationScreen(),

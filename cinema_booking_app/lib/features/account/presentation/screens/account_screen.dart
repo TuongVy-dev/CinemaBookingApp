@@ -58,6 +58,15 @@ class AccountScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.local_drink_outlined),
+                    title: const Text('Bắp & nước'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => c.push('/concessions'),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 if (kDebugMode) ...[
                   Card(
                     child: ListTile(
