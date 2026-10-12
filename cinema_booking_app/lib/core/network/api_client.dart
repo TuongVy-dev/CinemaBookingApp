@@ -13,7 +13,9 @@ class ApiClient {
   static ApiClient? _instance;
 
   static Future<ApiClient> getInstance() async {
-    if (_instance != null) return _instance!;
+    if (_instance != null) {
+      return _instance!;
+    }
 
     final directory = await getApplicationDocumentsDirectory();
     final cookieJar = PersistCookieJar(

@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/customer/presentation/screens/concession_catalog_screen.dart';
+import '../features/customer/presentation/screens/concession_cart_screen.dart';
 import '../core/ui/cinema_widgets.dart';
 import '../features/account/presentation/screens/account_screen.dart';
 import '../features/account/presentation/screens/login_registration_screen.dart';
 import '../features/account/presentation/screens/reset_password_screen.dart';
+import '../features/bookings_and_payment/domain/entities/booking_summary.dart';
+import '../features/bookings_and_payment/presentation/screens/booking_created_screen.dart';
+import '../features/bookings_and_payment/presentation/screens/booking_summary_debug_screen.dart';
+import '../features/bookings_and_payment/presentation/screens/booking_summary_screen.dart';
+import '../features/movies/presentation/screens/movie_detail_screen.dart';
+import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/concessions',
+      builder: (context, state) => const ConcessionCatalogScreen(),
+    ),
+    GoRoute(
+      path: '/cart',
+      builder: (context, state) => const ConcessionCartScreen(),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginRegistrationScreen(),
@@ -33,11 +49,48 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/movies',
-      builder: (context, state) => const _FeaturePlaceholder(title: 'Movies'),
+      builder: (context, state) => const MovieDiscoveryScreen(),
+      routes: [
+        GoRoute(
+          path: ':movieId',
+          builder: (context, state) =>
+              MovieDetailScreen(movieId: state.pathParameters['movieId']!),
+        ),
+      ],
+    ),
+    // Placeholder cho TV3; MovieDetailScreen chỉ truyền movieId.
+    GoRoute(
+      path: '/showtimes/:movieId',
+      builder: (context, state) =>
+          const _FeaturePlaceholder(title: 'Showtimes'),
     ),
     GoRoute(
       path: '/tickets',
       builder: (context, state) => const _FeaturePlaceholder(title: 'Tickets'),
+    ),
+    GoRoute(
+      path: '/booking-summary',
+      builder: (context, state) {
+        final selection = state.extra;
+        if (selection is BookingSelection) {
+          return BookingSummaryScreen(selection: selection);
+        }
+        return const _FeaturePlaceholder(title: 'Booking summary');
+      },
+    ),
+    GoRoute(
+      path: '/booking-summary-debug',
+      builder: (context, state) => const BookingSummaryDebugScreen(),
+    ),
+    GoRoute(
+      path: '/booking-created',
+      builder: (context, state) {
+        final booking = state.extra;
+        if (booking is CreatedBooking) {
+          return BookingCreatedScreen(booking: booking);
+        }
+        return const _FeaturePlaceholder(title: 'Đặt vé');
+      },
     ),
   ],
 );

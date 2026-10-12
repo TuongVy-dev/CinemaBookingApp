@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run Cinema Management",
+      "request": "launch",
+      "mainClass": "vn.edu.fpt.cinemamanagement.CinemaManagementApplication",
+      "env": {
+        "DB_PASSWORD": "123456",
+        "MAIL_USERNAME": "addminn9999@gmail.com",
+        "MAIL_PASSWORD": "fdgjjjdbqwyueljm"
+      }
+    }
+  ]
+}

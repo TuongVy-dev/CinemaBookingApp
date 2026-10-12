@@ -24,6 +24,8 @@ public interface MovieRepository extends JpaRepository<Movie, String> {
 
     Page<Movie> findByReleaseDateGreaterThan(LocalDate date, Pageable pageable);
 
+    List<Movie> findByReleaseDateGreaterThanOrderByReleaseDateAsc(LocalDate date);
+
     @Query("SELECT m FROM Movie m WHERE LOWER(m.title) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<Movie> searchByTitle(@Param("search") String search, Pageable pageable);
 }
