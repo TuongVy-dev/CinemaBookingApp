@@ -35,6 +35,10 @@ class MovieRepositoryImpl implements MovieRepository {
       return ApiResult.failure(
         const Failure('Dữ liệu phim từ máy chủ không hợp lệ.'),
       );
+    } catch (_) {
+      return ApiResult.failure(
+        const Failure('Đã xảy ra lỗi khi xử lý danh sách phim.'),
+      );
     }
   }
 
@@ -55,13 +59,20 @@ class MovieRepositoryImpl implements MovieRepository {
       return ApiResult.failure(
         const Failure('Dữ liệu phim từ máy chủ không hợp lệ.'),
       );
+    } catch (_) {
+      return ApiResult.failure(
+        const Failure('Đã xảy ra lỗi khi xử lý thông tin phim.'),
+      );
     }
   }
 
   Failure _dioFailure(DioException error, {required String fallback}) {
     final statusCode = error.response?.statusCode;
     if (statusCode == null) {
-      return const Failure('Không thể kết nối máy chủ. Vui lòng thử lại.');
+      return Failure(
+        'Không thể kết nối máy chủ tại ${error.requestOptions.baseUrl}. '
+        'Kiểm tra API_BASE_URL và kết nối mạng rồi thử lại.',
+      );
     }
     if (statusCode == 404) {
       return const Failure('Không tìm thấy phim.', statusCode: 404);
