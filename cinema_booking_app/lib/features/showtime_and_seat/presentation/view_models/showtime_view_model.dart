@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cinema_booking_app/core/network/api_result.dart';
-import 'package:cinema_booking_app/features/showtime/domain/entities/showtime.dart';
-import 'package:cinema_booking_app/features/showtime/presentation/states/showtime_state.dart';
-import 'package:cinema_booking_app/features/showtime/domain/repositories/showtime_repository.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/domain/entities/showtime.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/presentation/states/showtime_state.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/domain/repositories/showtime_repository.dart';
 
 class ShowtimeViewModel extends ChangeNotifier {
   ShowtimeViewModel(this._repository);

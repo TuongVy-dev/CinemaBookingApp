@@ -1,4 +1,5 @@
-import 'package:cinema_booking_app/features/showtime/domain/entities/showtime.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/domain/entities/showtime.dart';
+
 class ShowtimeDto {
   const ShowtimeDto({
     required this.showtimeId,
@@ -26,20 +27,19 @@ class ShowtimeDto {
   final String? roomType;
   final String? roomStatus;
 
-
-factory ShowtimeDto.fromJson(Map<String, dynamic> json) => ShowtimeDto(
-  showtimeId: json['showtimeId'] as String,
-  movieId: json['movieId'] as String,
-  movieTitle: json['movieTitle'] as String,
-  showDate: DateTime.parse(json['showDate'] as String),
-  startTime: json['startTime'] as String,
-  endTime: json['endTime'] as String,
-  movieGenre: json['movieGenre'] as String?,
-  movieDuration: json['movieDuration'] as int?,
-  roomId: json['roomId'] as String?,
-  roomType: json['roomType'] as String?,
-  roomStatus: json['roomStatus'] as String?,
-);
+  factory ShowtimeDto.fromJson(Map<String, dynamic> json) => ShowtimeDto(
+    showtimeId: json['showtimeId'] as String,
+    movieId: json['movieId'] as String,
+    movieTitle: json['movieTitle'] as String,
+    showDate: DateTime.parse(json['showDate'] as String),
+    startTime: json['startTime'] as String,
+    endTime: json['endTime'] as String,
+    movieGenre: json['movieGenre'] as String?,
+    movieDuration: json['movieDuration'] as int?,
+    roomId: json['roomId'] as String?,
+    roomType: json['roomType'] as String?,
+    roomStatus: json['roomStatus'] as String?,
+  );
 
   Showtime toEntity() => Showtime(
     showtimeId: showtimeId,

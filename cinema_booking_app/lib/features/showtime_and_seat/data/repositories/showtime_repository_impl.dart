@@ -1,8 +1,8 @@
 import 'package:cinema_booking_app/core/network/api_result.dart';
-import 'package:cinema_booking_app/features/showtime/data/dtos/showtime_dto.dart';
-import 'package:cinema_booking_app/features/showtime/data/services/showtime_api_service.dart';
-import 'package:cinema_booking_app/features/showtime/domain/entities/showtime.dart';
-import 'package:cinema_booking_app/features/showtime/domain/repositories/showtime_repository.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/data/dtos/showtime_dto.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/data/services/showtime_api_service.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/domain/entities/showtime.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/domain/repositories/showtime_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:cinema_booking_app/core/errors/failures.dart';
 

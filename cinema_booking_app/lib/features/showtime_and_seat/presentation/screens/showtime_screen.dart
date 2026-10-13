@@ -51,6 +51,13 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
     _loadShowtimes();
   }
 
+  /// Hợp đồng sang View Seat Map: chỉ truyền `showtimeId`; phòng/template
+  /// lấy từ API sơ đồ ghế của chính suất chiếu đó.
+  void _openSeatMap(Showtime showtime) {
+    setState(() => _selectedShowtimeId = showtime.showtimeId);
+    context.push('/seats/${Uri.encodeComponent(showtime.showtimeId)}');
+  }
+
   String _formatTime(String value) {
     final parts = value.split(':');
     return parts.length >= 2 ? '${parts[0]}:${parts[1]}' : value;
@@ -153,11 +160,7 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
                             startTime: _formatTime(showtime.startTime),
                             selected:
                                 _selectedShowtimeId == showtime.showtimeId,
-                            onTap: () {
-                              setState(() {
-                                _selectedShowtimeId = showtime.showtimeId;
-                              });
-                            },
+                            onTap: () => _openSeatMap(showtime),
                           );
                         },
                       ),
@@ -278,12 +281,18 @@ class _ShowtimeDateCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_weekdays[date.weekday - 1], style: const TextStyle(fontSize: 10)),
+            Text(
+              _weekdays[date.weekday - 1],
+              style: const TextStyle(fontSize: 10),
+            ),
             Text(
               date.day.toString().padLeft(2, '0'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
-            Text('${date.month}/${date.year}', style: const TextStyle(fontSize: 9)),
+            Text(
+              '${date.month}/${date.year}',
+              style: const TextStyle(fontSize: 9),
+            ),
           ],
         ),
       ),

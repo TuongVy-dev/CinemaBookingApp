@@ -13,9 +13,12 @@ import '../features/movies/data/services/movie_api_service.dart';
 import '../features/movies/domain/repositories/movie_repository.dart';
 import '../features/movies/presentation/view_models/movie_discovery_view_model.dart';
 
-import '../features/showtime/presentation/view_models/showtime_view_model.dart';
-import '../features/showtime/data/repositories/showtime_repository_impl.dart';
-import '../features/showtime/data/services/showtime_api_service.dart';
+import '../features/showtime_and_seat/presentation/view_models/showtime_view_model.dart';
+import '../features/showtime_and_seat/data/repositories/showtime_repository_impl.dart';
+import '../features/showtime_and_seat/data/services/showtime_api_service.dart';
+import '../features/showtime_and_seat/data/repositories/seat_map_repository_impl.dart';
+import '../features/showtime_and_seat/data/services/seat_map_api_service.dart';
+import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({super.key, required this.child});
@@ -37,6 +40,11 @@ class AppProviders extends StatelessWidget {
           ShowtimeRepositoryImpl(
             ShowtimeApiService(dio: ApiClient.instance.dio),
           ),
+        ),
+      ),
+      Provider<SeatMapRepository>(
+        create: (context) => SeatMapRepositoryImpl(
+          SeatMapApiService(context.read<ApiClient>().dio),
         ),
       ),
       Provider<MovieRepository>(

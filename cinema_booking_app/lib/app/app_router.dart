@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../features/customer/presentation/screens/concession_catalog_screen.dart';
 import '../features/customer/presentation/screens/concession_cart_screen.dart';
@@ -14,8 +15,11 @@ import '../features/bookings_and_payment/presentation/screens/booking_summary_sc
 import '../features/movies/presentation/screens/movie_detail_screen.dart';
 import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
-import '../features/showtime/presentation/screens/showtime_screen.dart';
-import '../features/showtime/presentation/screens/movie_demo_screen.dart';
+import '../features/showtime_and_seat/presentation/screens/showtime_screen.dart';
+import '../features/showtime_and_seat/presentation/screens/movie_demo_screen.dart';
+import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
+import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
+import '../features/showtime_and_seat/presentation/view_models/seat_selection_view_model.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -73,6 +77,18 @@ final appRouter = GoRouter(
         return ShowtimeSelectionScreen(
           movieId: state.pathParameters['movieId']!,
           movieTitle: extra is String ? extra : 'Chọn suất chiếu',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/seats/:showtimeId',
+      builder: (context, state) {
+        final showtimeId = state.pathParameters['showtimeId']!;
+        return ChangeNotifierProvider<SeatSelectionViewModel>(
+          create: (context) =>
+              SeatSelectionViewModel(context.read<SeatMapRepository>())
+                ..load(showtimeId),
+          child: SeatSelectionScreen(showtimeId: showtimeId),
         );
       },
     ),

@@ -57,4 +57,7 @@ class ApiConfig {
 
   static String showtimesFor({required String movieId, required String date}) =>
       '/api/showtimes/movie/$movieId?date=$date';
+
+  static String showtimeSeats(String showtimeId) =>
+      '/api/showtimes/${Uri.encodeComponent(showtimeId)}/seats';
 }

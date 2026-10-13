@@ -1,4 +1,4 @@
-import 'package:cinema_booking_app/features/showtime/domain/entities/showtime.dart';
+import 'package:cinema_booking_app/features/showtime_and_seat/domain/entities/showtime.dart';
 
 class ShowtimeState {
   const ShowtimeState({
