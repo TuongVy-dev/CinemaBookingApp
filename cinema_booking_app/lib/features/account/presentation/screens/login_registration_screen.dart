@@ -25,6 +25,7 @@ class _LoginRegistrationScreenState extends State<LoginRegistrationScreen> {
   String _gender = 'Nam';
   bool _isRegister = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -115,8 +116,10 @@ class _LoginRegistrationScreenState extends State<LoginRegistrationScreen> {
                         ButtonSegment(value: true, label: Text('Đăng ký')),
                       ],
                       selected: {_isRegister},
-                      onSelectionChanged: (value) =>
-                          setState(() => _isRegister = value.first),
+                      onSelectionChanged: (value) => setState(() {
+                        _isRegister = value.first;
+                        context.read<AccountViewModel>().clearError();
+                      }),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -166,9 +169,21 @@ class _LoginRegistrationScreenState extends State<LoginRegistrationScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _confirmPassword,
-                        obscureText: true,
-                        decoration: const InputDecoration(
+                        obscureText: _obscureConfirmPassword,
+                        decoration: InputDecoration(
                           labelText: 'Xác nhận mật khẩu',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscureConfirmPassword =
+                                  !_obscureConfirmPassword,
+                            ),
+                          ),
                         ),
                         validator: (value) => value != _password.text
                             ? 'Mật khẩu xác nhận không khớp.'

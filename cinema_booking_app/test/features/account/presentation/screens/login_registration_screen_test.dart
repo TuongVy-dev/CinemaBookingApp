@@ -107,6 +107,28 @@ void main() {
     expect(find.text('Giới tính'), findsOneWidget);
   });
 
+  testWidgets('registration confirm password toggle switches visibility', (
+    tester,
+  ) async {
+    await pumpLoginRegistrationScreen(tester);
+    await tester.tap(find.text('Đăng ký').first);
+    await tester.pumpAndSettle();
+
+    final confirmFieldFinder = find.descendant(
+      of: find.widgetWithText(TextFormField, 'Xác nhận mật khẩu'),
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(confirmFieldFinder).obscureText, isTrue);
+
+    await tester.tap(find.descendant(
+      of: find.widgetWithText(TextFormField, 'Xác nhận mật khẩu'),
+      matching: find.byIcon(Icons.visibility_off_outlined),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<TextField>(confirmFieldFinder).obscureText, isFalse);
+  });
+
   testWidgets('submitting empty registration fields shows validation errors', (
     tester,
   ) async {
