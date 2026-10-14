@@ -35,13 +35,6 @@ class AppProviders extends StatelessWidget {
       ChangeNotifierProvider<BookingSummaryViewModel>(
         create: (_) => BookingSummaryViewModel(),
       ),
-      ChangeNotifierProvider<ShowtimeViewModel>(
-        create: (_) => ShowtimeViewModel(
-          ShowtimeRepositoryImpl(
-            ShowtimeApiService(dio: ApiClient.instance.dio),
-          ),
-        ),
-      ),
       Provider<SeatMapRepository>(
         create: (context) => SeatMapRepositoryImpl(
           SeatMapApiService(context.read<ApiClient>().dio),
@@ -49,6 +42,15 @@ class AppProviders extends StatelessWidget {
       ),
       Provider<MovieRepository>(
         create: (_) => MovieRepositoryImpl(MovieApiService()),
+      ),
+      // Đặt sau MovieRepository để create() đọc được provider phía trên.
+      ChangeNotifierProvider<ShowtimeViewModel>(
+        create: (context) => ShowtimeViewModel(
+          ShowtimeRepositoryImpl(
+            ShowtimeApiService(dio: ApiClient.instance.dio),
+          ),
+          context.read<MovieRepository>(),
+        ),
       ),
       ChangeNotifierProvider<MovieDiscoveryViewModel>(
         create: (context) =>

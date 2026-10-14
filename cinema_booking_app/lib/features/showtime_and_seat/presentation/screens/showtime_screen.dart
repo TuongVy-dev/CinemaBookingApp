@@ -11,13 +11,15 @@ class ShowtimeSelectionScreen extends StatefulWidget {
   const ShowtimeSelectionScreen({
     super.key,
     required this.movieId,
-    required this.movieTitle,
+    this.movieTitle,
     this.movieDuration,
     this.ageRating,
   });
 
   final String movieId;
-  final String movieTitle;
+
+  /// Dữ liệu tùy chọn từ màn trước; nếu thiếu sẽ lấy từ chi tiết phim.
+  final String? movieTitle;
   final int? movieDuration;
   final String? ageRating;
 
@@ -35,7 +37,9 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
     super.initState();
     _selectedDate = DateUtils.dateOnly(DateTime.now());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadShowtimes();
+      if (!mounted) return;
+      context.read<ShowtimeViewModel>().loadMovie(widget.movieId);
+      _loadShowtimes();
     });
   }
 
@@ -69,10 +73,19 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<ShowtimeViewModel>().state;
+    final vm = context.watch<ShowtimeViewModel>();
+    final state = vm.state;
+    // Bỏ qua phim của lần mở trước khi ViewModel dùng chung toàn app.
+    final movie = vm.movie?.id == widget.movieId ? vm.movie : null;
+    final firstShowtime = state.showtimes.isEmpty
+        ? null
+        : state.showtimes.first;
+    final title =
+        movie?.title ?? widget.movieTitle ?? firstShowtime?.movieTitle;
     final duration =
+        movie?.durationMinutes ??
         widget.movieDuration ??
-        (state.showtimes.isEmpty ? null : state.showtimes.first.movieDuration);
+        firstShowtime?.movieDuration;
 
     return Scaffold(
       appBar: AppBar(
@@ -92,9 +105,9 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _MovieHeader(
-                title: widget.movieTitle,
+                title: title ?? 'Đang tải thông tin phim…',
                 duration: duration,
-                ageRating: widget.ageRating,
+                ageRating: movie?.ageRating ?? widget.ageRating,
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -109,7 +122,7 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
                   itemCount: 7,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: 2),
                   itemBuilder: (context, index) {
                     final date = DateUtils.dateOnly(
                       DateTime.now().add(Duration(days: index)),
@@ -158,6 +171,7 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
                           return _ShowtimeCard(
                             showtime: showtime,
                             startTime: _formatTime(showtime.startTime),
+                            endTime: _formatTime(showtime.endTime),
                             selected:
                                 _selectedShowtimeId == showtime.showtimeId,
                             onTap: () => _openSeatMap(showtime),
@@ -218,6 +232,7 @@ class _MovieHeader extends StatelessWidget {
                 Text(
                   [
                     if (duration != null) '$duration phút',
+                    " - ",
                     if (ageRating != null && ageRating!.isNotEmpty) ageRating!,
                   ].join(' '),
                   style: const TextStyle(
@@ -239,7 +254,7 @@ class _MovieHeader extends StatelessWidget {
               shape: const StadiumBorder(),
             ),
             child: const Text(
-              'DEMO',
+              'View trailer',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
             ),
           ),
@@ -304,12 +319,14 @@ class _ShowtimeCard extends StatelessWidget {
   const _ShowtimeCard({
     required this.showtime,
     required this.startTime,
+    required this.endTime,
     required this.selected,
     required this.onTap,
   });
 
   final Showtime showtime;
   final String startTime;
+  final String endTime;
   final bool selected;
   final VoidCallback onTap;
 
@@ -333,10 +350,10 @@ class _ShowtimeCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              startTime,
+              '$startTime - $endTime',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               showtime.roomType ?? showtime.roomId ?? 'Phòng chiếu',
               maxLines: 1,

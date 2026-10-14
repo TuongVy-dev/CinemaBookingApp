@@ -16,7 +16,6 @@ import '../features/movies/presentation/screens/movie_detail_screen.dart';
 import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
 import '../features/showtime_and_seat/presentation/screens/showtime_screen.dart';
-import '../features/showtime_and_seat/presentation/screens/movie_demo_screen.dart';
 import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
 import '../features/showtime_and_seat/presentation/view_models/seat_selection_view_model.dart';
@@ -48,10 +47,6 @@ final appRouter = GoRouter(
       ],
     ),
     GoRoute(
-      path: '/movies-demo',
-      builder: (context, state) => const MoviesDemoScreen(),
-    ),
-    GoRoute(
       path: '/account',
       builder: (context, state) => const AccountScreen(),
     ),
@@ -76,7 +71,7 @@ final appRouter = GoRouter(
         final extra = state.extra;
         return ShowtimeSelectionScreen(
           movieId: state.pathParameters['movieId']!,
-          movieTitle: extra is String ? extra : 'Chọn suất chiếu',
+          movieTitle: extra is String ? extra : 'null',
         );
       },
     ),
