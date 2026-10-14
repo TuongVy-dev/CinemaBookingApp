@@ -197,21 +197,29 @@ public class AuthApiController {
                     .findFirst()
                     .orElse("ROLE_USER");
 
-            // Find user ID
+            // Find user ID & details
             String userId = "";
             String username = authentication.getName();
+            UserInfoResponseDTO userInfo = new UserInfoResponseDTO(userId, username, role);
 
             Customer c = customerRepository.findByUsername(username).orElse(null);
             if (c != null) {
                 userId = c.getUser_id();
+                userInfo.setUserId(userId);
+                userInfo.setEmail(c.getEmail());
+                userInfo.setPhone(c.getPhone());
+                userInfo.setDob(c.getDob() != null ? c.getDob().toString() : null);
+                userInfo.setSex(c.getSex());
             } else {
                 Staff s = staffRepository.findByUsername(username).orElse(null);
                 if (s != null) {
                     userId = s.getStaffID();
+                    userInfo.setUserId(userId);
+                    userInfo.setEmail(s.getEmail());
+                    userInfo.setPhone(s.getPhone());
                 }
             }
 
-            UserInfoResponseDTO userInfo = new UserInfoResponseDTO(userId, username, role);
             return ResponseEntity.ok(userInfo);
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -236,17 +244,27 @@ public class AuthApiController {
                 .orElse("ROLE_USER");
 
         String userId = "";
+        UserInfoResponseDTO userInfo = new UserInfoResponseDTO(userId, username, role);
+
         Customer c = customerRepository.findByUsername(username).orElse(null);
         if (c != null) {
             userId = c.getUser_id();
+            userInfo.setUserId(userId);
+            userInfo.setEmail(c.getEmail());
+            userInfo.setPhone(c.getPhone());
+            userInfo.setDob(c.getDob() != null ? c.getDob().toString() : null);
+            userInfo.setSex(c.getSex());
         } else {
             Staff s = staffRepository.findByUsername(username).orElse(null);
             if (s != null) {
                 userId = s.getStaffID();
+                userInfo.setUserId(userId);
+                userInfo.setEmail(s.getEmail());
+                userInfo.setPhone(s.getPhone());
             }
         }
 
-        return ResponseEntity.ok(new UserInfoResponseDTO(userId, username, role));
+        return ResponseEntity.ok(userInfo);
     }
 
     // ========================== LOGOUT ==========================
