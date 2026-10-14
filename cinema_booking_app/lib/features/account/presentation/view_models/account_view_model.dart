@@ -40,8 +40,11 @@ class AccountViewModel extends ChangeNotifier {
     if (result case Success<UserSession>(:final data)) {
       _userSession = data;
       _profile =
-          await _localStorage.getProfile(data.username) ??
-          _profileFromSession(data);
+          _hasCompleteProfile(data.profile)
+              ? data.profile
+              : (await _localStorage.getProfile(data.username) ??
+                  data.profile ??
+                  _profileFromSession(data));
       _setLoading(value: false);
       return true;
     }
@@ -160,8 +163,11 @@ class AccountViewModel extends ChangeNotifier {
         when data.isAuthenticated) {
       _userSession = data;
       _profile =
-          await _localStorage.getProfile(data.username) ??
-          _profileFromSession(data);
+          _hasCompleteProfile(data.profile)
+              ? data.profile
+              : (await _localStorage.getProfile(data.username) ??
+                  data.profile ??
+                  _profileFromSession(data));
     }
     notifyListeners();
   }
@@ -170,6 +176,13 @@ class AccountViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  bool _hasCompleteProfile(CustomerProfile? profile) =>
+      profile != null &&
+      (profile.email != null ||
+          profile.phone != null ||
+          profile.dob != null ||
+          profile.sex != null);
 
   CustomerProfile _profileFromSession(UserSession session) =>
       CustomerProfile(userId: session.userId, username: session.username);

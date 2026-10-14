@@ -84,6 +84,27 @@ void main() {
       expect(session.isAuthenticated, isTrue);
     });
 
+    test('login extracts full customer profile from backend response', () async {
+      mockApiService.loginResponse = {
+        'userId': 'CS000001',
+        'username': 'thinhnp',
+        'role': 'ROLE_USER',
+        'email': 'thinh@gmail.com',
+        'phone': '0987654321',
+        'dob': '2000-05-15',
+        'sex': true,
+      };
+
+      final result = await repository.login('thinhnp', 'password123');
+
+      expect(result, isA<Success>());
+      final session = (result as Success).data;
+      expect(session.profile?.email, equals('thinh@gmail.com'));
+      expect(session.profile?.phone, equals('0987654321'));
+      expect(session.profile?.dob, equals('2000-05-15'));
+      expect(session.profile?.sex, equals('Nam'));
+    });
+
     test('getMe extracts String userId CS000001 properly', () async {
       mockApiService.meResponse = {
         'userId': 'CS000001',

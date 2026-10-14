@@ -110,6 +110,38 @@ void main() {
       expect(viewModel.error, isNull);
     });
 
+    test('login with backend profile populates full customer details directly', () async {
+      const profile = CustomerProfile(
+        userId: 'CS000001',
+        username: 'CinemaUser',
+        email: 'user@cinema.vn',
+        phone: '0901234567',
+        dob: '2000-01-01',
+        sex: 'Nam',
+      );
+      const session = UserSession(
+        userId: 'CS000001',
+        username: 'CinemaUser',
+        role: 'customer',
+        isAuthenticated: true,
+        profile: profile,
+      );
+      final repository = FakeAccountRepository()
+        ..loginResponse = ApiResult.success(session);
+      final viewModel = AccountViewModel(
+        repository,
+        FakeAccountLocalStorageService(),
+      );
+
+      final result = await viewModel.login('CinemaUser', 'Password1!');
+
+      expect(result, isTrue);
+      expect(viewModel.profile?.email, equals('user@cinema.vn'));
+      expect(viewModel.profile?.phone, equals('0901234567'));
+      expect(viewModel.profile?.dob, equals('2000-01-01'));
+      expect(viewModel.profile?.sex, equals('Nam'));
+    });
+
     test(
       'login failure keeps logged out and exposes the failure message',
       () async {

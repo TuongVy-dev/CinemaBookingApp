@@ -138,6 +138,7 @@ class AccountRepositoryImpl implements AccountRepository {
     username: user.username,
     role: user.role,
     isAuthenticated: true,
+    profile: user.toProfile(),
   );
 
   Map<String, dynamic> _userPayload(dynamic data) {
