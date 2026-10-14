@@ -24,6 +24,7 @@ class _LoginRegistrationScreenState extends State<LoginRegistrationScreen> {
   final _birthDate = TextEditingController();
   String _gender = 'Nam';
   bool _isRegister = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -126,8 +127,21 @@ class _LoginRegistrationScreenState extends State<LoginRegistrationScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _password,
-                      obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Mật khẩu'),
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Mật khẩu',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
+                      ),
                       validator: validatePassword,
                     ),
                     if (!_isRegister)

@@ -76,6 +76,26 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'Mật khẩu'), findsOneWidget);
   });
 
+  testWidgets('password toggle switches obscureText visibility', (tester) async {
+    await pumpLoginRegistrationScreen(tester);
+
+    final passwordFieldFinder = find.descendant(
+      of: find.widgetWithText(TextFormField, 'Mật khẩu'),
+      matching: find.byType(TextField),
+    );
+    final passwordField = tester.widget<TextField>(passwordFieldFinder);
+    expect(passwordField.obscureText, isTrue);
+
+    // Tap toggle visibility icon
+    await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+    await tester.pumpAndSettle();
+
+    final visiblePasswordField =
+        tester.widget<TextField>(passwordFieldFinder);
+    expect(visiblePasswordField.obscureText, isFalse);
+    expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+  });
+
   testWidgets('registration tab reveals account detail fields', (tester) async {
     await pumpLoginRegistrationScreen(tester);
     await tester.tap(find.text('Đăng ký').first);
