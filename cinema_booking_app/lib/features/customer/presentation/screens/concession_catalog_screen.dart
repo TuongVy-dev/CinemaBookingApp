@@ -20,22 +20,6 @@ class ConcessionCatalogScreen extends StatelessWidget {
           'BẮP & NƯỚC',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Đăng nhập',
-            onPressed: () => context.push('/login'),
-            icon: const Icon(Icons.login),
-          ),
-          IconButton(
-            onPressed: () => context.push('/cart'),
-            icon: Badge(
-              label: Text('${vm.count}'),
-              isLabelVisible: vm.count > 0,
-              child: const Icon(Icons.shopping_bag_outlined),
-            ),
-          ),
-          const SizedBox(width: 6),
-        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, color: Color(0xFF332929)),
