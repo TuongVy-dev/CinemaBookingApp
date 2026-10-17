@@ -158,7 +158,20 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, String> {
             @Param("end") LocalTime end
     );
 
-    List<Showtime> findAllByMovie_MovieIDAndShowDate(String movieId, LocalDate selectedDate);
+    @Query("""
+            SELECT s
+            FROM Showtime s
+            JOIN FETCH s.movie
+            JOIN FETCH s.room r
+            LEFT JOIN FETCH r.template
+            WHERE s.movie.movieID = :movieId
+              AND s.showDate = :selectedDate
+            ORDER BY s.startTime ASC
+            """)
+    List<Showtime> findAllByMovie_MovieIDAndShowDate(
+            @Param("movieId") String movieId,
+            @Param("selectedDate") LocalDate selectedDate
+    );
 
     @Query(value = "SELECT TOP 1 * FROM showtime " +
             "WHERE movie_id = :movieId " +

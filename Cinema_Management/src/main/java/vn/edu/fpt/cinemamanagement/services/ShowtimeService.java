@@ -283,9 +283,14 @@ public class ShowtimeService {
     }
 
 
-    public List<Showtime> getShowtimesByMovieAndDate(String movieId, LocalDate selectedDate) {
-        return repo.findAllByMovie_MovieIDAndShowDate(movieId, selectedDate);
+    @Transactional(readOnly = true)
+    public List<ShowtimeResponseDetailDTO> getShowtimesByMovieAndDate(String movieId, LocalDate selectedDate) {
+        return repo.findAllByMovie_MovieIDAndShowDate(movieId, selectedDate)
+                .stream()
+                .map(this::toShowtimeResponseDetailDTO)
+                .collect(Collectors.toList());
     }
+
     public Showtime findByMovie(String movieId , String times, String  dates){
         LocalDate date= LocalDate.parse(dates);
         LocalTime time = LocalTime.parse(times, DateTimeFormatter.ofPattern("HH:mm"));
