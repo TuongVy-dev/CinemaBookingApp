@@ -19,9 +19,14 @@ class ApiConfig {
   static String get baseUrl => _baseUrl;
 
   static void configure({String? baseUrl}) {
-    if (baseUrl != null && baseUrl.trim().isNotEmpty) {
-      _baseUrl = baseUrl.trim().replaceFirst(RegExp(r'/$'), '');
+    final trimmedBaseUrl = baseUrl?.trim();
+    if (trimmedBaseUrl != null && trimmedBaseUrl.isNotEmpty) {
+      _baseUrl = trimmedBaseUrl.replaceAll(RegExp(r'/+$'), '');
     }
+  }
+
+  static void reset() {
+    _baseUrl = _defaultBaseUrl();
   }
 
   static const login = '/api/auth/login';
@@ -46,4 +51,13 @@ class ApiConfig {
     }
     return '$_baseUrl${value.startsWith('/') ? '' : '/'}$value';
   }
+
+  //Ngan
+  static const showtimes = '/api/showtimes/movie';
+
+  static String showtimesFor({required String movieId, required String date}) =>
+      '/api/showtimes/movie/$movieId?date=$date';
+
+  static String showtimeSeats(String showtimeId) =>
+      '/api/showtimes/${Uri.encodeComponent(showtimeId)}/seats';
 }

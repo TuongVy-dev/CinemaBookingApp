@@ -1,6 +1,7 @@
 package vn.edu.fpt.cinemamanagement.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import vn.edu.fpt.cinemamanagement.dto.PageResponseDTO;
 import vn.edu.fpt.cinemamanagement.dto.ShowtimeForm;
 import vn.edu.fpt.cinemamanagement.dto.ShowtimeResponseDTO;
+import vn.edu.fpt.cinemamanagement.dto.ShowtimeResponseDetailDTO;
+import vn.edu.fpt.cinemamanagement.dto.response.CashierSeatMapResponseDTO;
 import vn.edu.fpt.cinemamanagement.entities.Movie;
 import vn.edu.fpt.cinemamanagement.entities.Room;
 import vn.edu.fpt.cinemamanagement.entities.Showtime;
@@ -26,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -41,14 +45,18 @@ public class ShowtimeController {
     private final RoomService roomService;
     private final ShowtimeService showtimeService;
 
+    private final ICashierSeatMapService seatMapService;
+
     public ShowtimeController(MovieService movieService,
                               RoomService roomService,
                               ShowtimeService showtimeService,
-                              TimeSlotService timeSlotService) {
+                              TimeSlotService timeSlotService,
+                              ICashierSeatMapService seatMapService) {
         this.movieService = movieService;
         this.roomService = roomService;
         this.showtimeService = showtimeService;
         this.timeSlotService = timeSlotService;
+        this.seatMapService = seatMapService;
     }
 
     @GetMapping("/admin")
@@ -76,6 +84,25 @@ public class ShowtimeController {
                 )));
     }
 
+        @GetMapping("/movie/{movieId}")
+    public ResponseEntity<List<ShowtimeResponseDetailDTO>> getShowtimesByMovieAndDate(
+            @PathVariable String movieId,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date
+    ) {
+        return ResponseEntity.ok(showtimeService.getShowtimesByMovieAndDate(movieId, date));
+    }
+
+    @GetMapping("/{showtimeId}/seats")
+    public ResponseEntity<?> getSeatMap(@PathVariable String showtimeId) {
+        try {
+            CashierSeatMapResponseDTO seatMap = seatMapService.getSeatMap(showtimeId);
+            return ResponseEntity.ok(seatMap);
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("error", exception.getMessage()));
+        }
+    }
 
 
     /**  FORM tạo mới */

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../features/customer/presentation/screens/concession_catalog_screen.dart';
 import '../features/customer/presentation/screens/concession_cart_screen.dart';
@@ -13,6 +14,11 @@ import '../features/bookings_and_payment/presentation/screens/booking_summary_de
 import '../features/bookings_and_payment/presentation/screens/booking_summary_screen.dart';
 import '../features/movies/presentation/screens/movie_detail_screen.dart';
 import '../features/movies/presentation/screens/movie_discovery_screen.dart';
+
+import '../features/showtime_and_seat/presentation/screens/showtime_screen.dart';
+import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
+import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
+import '../features/showtime_and_seat/presentation/view_models/seat_selection_view_model.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -28,6 +34,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginRegistrationScreen(),
+    ),
+    GoRoute(
+      path: '/movies',
+      builder: (context, state) => const MovieDiscoveryScreen(),
+      routes: [
+        GoRoute(
+          path: ':movieId',
+          builder: (context, state) =>
+              MovieDetailScreen(movieId: state.pathParameters['movieId']!),
+        ),
+      ],
     ),
     GoRoute(
       path: '/account',
@@ -47,22 +64,28 @@ final appRouter = GoRouter(
         );
       },
     ),
-    GoRoute(
-      path: '/movies',
-      builder: (context, state) => const MovieDiscoveryScreen(),
-      routes: [
-        GoRoute(
-          path: ':movieId',
-          builder: (context, state) =>
-              MovieDetailScreen(movieId: state.pathParameters['movieId']!),
-        ),
-      ],
-    ),
-    // Placeholder cho TV3; MovieDetailScreen chỉ truyền movieId.
+
     GoRoute(
       path: '/showtimes/:movieId',
-      builder: (context, state) =>
-          const _FeaturePlaceholder(title: 'Showtimes'),
+      builder: (context, state) {
+        final extra = state.extra;
+        return ShowtimeSelectionScreen(
+          movieId: state.pathParameters['movieId']!,
+          movieTitle: extra is String ? extra : 'null',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/seats/:showtimeId',
+      builder: (context, state) {
+        final showtimeId = state.pathParameters['showtimeId']!;
+        return ChangeNotifierProvider<SeatSelectionViewModel>(
+          create: (context) =>
+              SeatSelectionViewModel(context.read<SeatMapRepository>())
+                ..load(showtimeId),
+          child: SeatSelectionScreen(showtimeId: showtimeId),
+        );
+      },
     ),
     GoRoute(
       path: '/tickets',

@@ -13,6 +13,13 @@ import '../features/movies/data/services/movie_api_service.dart';
 import '../features/movies/domain/repositories/movie_repository.dart';
 import '../features/movies/presentation/view_models/movie_discovery_view_model.dart';
 
+import '../features/showtime_and_seat/presentation/view_models/showtime_view_model.dart';
+import '../features/showtime_and_seat/data/repositories/showtime_repository_impl.dart';
+import '../features/showtime_and_seat/data/services/showtime_api_service.dart';
+import '../features/showtime_and_seat/data/repositories/seat_map_repository_impl.dart';
+import '../features/showtime_and_seat/data/services/seat_map_api_service.dart';
+import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
+
 class AppProviders extends StatelessWidget {
   const AppProviders({super.key, required this.child});
 
@@ -28,8 +35,22 @@ class AppProviders extends StatelessWidget {
       ChangeNotifierProvider<BookingSummaryViewModel>(
         create: (_) => BookingSummaryViewModel(),
       ),
+      Provider<SeatMapRepository>(
+        create: (context) => SeatMapRepositoryImpl(
+          SeatMapApiService(context.read<ApiClient>().dio),
+        ),
+      ),
       Provider<MovieRepository>(
         create: (_) => MovieRepositoryImpl(MovieApiService()),
+      ),
+      // Đặt sau MovieRepository để create() đọc được provider phía trên.
+      ChangeNotifierProvider<ShowtimeViewModel>(
+        create: (context) => ShowtimeViewModel(
+          ShowtimeRepositoryImpl(
+            ShowtimeApiService(dio: ApiClient.instance.dio),
+          ),
+          context.read<MovieRepository>(),
+        ),
       ),
       ChangeNotifierProvider<MovieDiscoveryViewModel>(
         create: (context) =>
