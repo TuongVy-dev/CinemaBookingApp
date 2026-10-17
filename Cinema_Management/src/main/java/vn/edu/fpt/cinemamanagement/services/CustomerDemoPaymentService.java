@@ -31,6 +31,7 @@ public class CustomerDemoPaymentService {
     private final TicketRepository ticketRepository;
     private final PaymentService paymentService;
     private final TicketService ticketService;
+    private final CustomerBookingCancellationService cancellationService;
 
     public CustomerDemoPaymentService(
             BookingRepository bookingRepository,
@@ -39,7 +40,8 @@ public class CustomerDemoPaymentService {
             ShowtimeSeatRepository showtimeSeatRepository,
             TicketRepository ticketRepository,
             PaymentService paymentService,
-            TicketService ticketService
+            TicketService ticketService,
+            CustomerBookingCancellationService cancellationService
     ) {
         this.bookingRepository = bookingRepository;
         this.bookingDetailRepository = bookingDetailRepository;
@@ -48,6 +50,7 @@ public class CustomerDemoPaymentService {
         this.ticketRepository = ticketRepository;
         this.paymentService = paymentService;
         this.ticketService = ticketService;
+        this.cancellationService = cancellationService;
     }
 
     @Transactional
@@ -56,7 +59,7 @@ public class CustomerDemoPaymentService {
             String bookingId,
             String requestedOutcome
     ) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng."));
         if (!customerId.equals(booking.getUserId())) {
             throw new SecurityException("Bạn không có quyền thanh toán đơn hàng này.");
@@ -79,13 +82,25 @@ public class CustomerDemoPaymentService {
         payment.setAmount(booking.getTotalAmount());
         payment.setPaymentTime(LocalDateTime.now());
 
-        if (outcome == DemoOutcome.FAILED) {
-            payment.setPaymentStatus("FAILED");
+        if (isExpired(booking)) {
+            payment.setPaymentStatus("EXPIRED");
             paymentRepository.save(payment);
+            cancellationService.cancelBookedBooking(booking);
             return new DemoPaymentResponseDTO(
                     booking.getId(), payment.getId(), payment.getPaymentStatus(),
                     payment.getAmount(), null,
-                    "Thanh toán demo thất bại. Đơn hàng vẫn được giữ để bạn thử lại."
+                    "Đơn hàng đã hết hạn thanh toán sau 5 phút. Ghế đã được trả lại."
+            );
+        }
+
+        if (outcome == DemoOutcome.FAILED) {
+            payment.setPaymentStatus("FAILED");
+            paymentRepository.save(payment);
+            cancellationService.cancelBookedBooking(booking);
+            return new DemoPaymentResponseDTO(
+                    booking.getId(), payment.getId(), payment.getPaymentStatus(),
+                    payment.getAmount(), null,
+                    "Thanh toán demo thất bại. Đơn hàng đã hủy và ghế đã được trả lại."
             );
         }
 
@@ -125,6 +140,11 @@ public class CustomerDemoPaymentService {
         payment.setId(paymentService.generatePaymentId());
         payment.setBooking(booking);
         return payment;
+    }
+
+    private boolean isExpired(Booking booking) {
+        return booking.getCreatedAt() != null
+                && !booking.getCreatedAt().isAfter(LocalDateTime.now().minusMinutes(5));
     }
 
     private DemoPaymentResponseDTO paidResult(Booking booking) {

@@ -34,7 +34,7 @@ class BookingCreatedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Đơn đang chờ thanh toán. Thanh toán thành công sẽ phát hành vé.',
+                'Đơn chờ thanh toán trong 5 phút. Quá hạn hoặc thanh toán thất bại, ghế sẽ được trả lại.',
                 style: TextStyle(color: CinemaColors.muted),
                 textAlign: TextAlign.center,
               ),

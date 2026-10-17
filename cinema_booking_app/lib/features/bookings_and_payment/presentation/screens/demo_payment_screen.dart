@@ -24,11 +24,7 @@ class DemoPaymentScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: result == null
               ? _PaymentOptions(booking: booking, viewModel: viewModel)
-              : _PaymentResult(
-                  booking: booking,
-                  result: result,
-                  onRetry: viewModel.retry,
-                ),
+              : _PaymentResult(booking: booking, result: result),
         ),
       ),
     );
@@ -57,6 +53,12 @@ class _PaymentOptions extends StatelessWidget {
         'Chọn kết quả để kiểm thử luồng thanh toán. Hệ thống sẽ xử lý trên server.',
         textAlign: TextAlign.center,
         style: TextStyle(color: CinemaColors.muted),
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        'Đơn sẽ tự hủy sau 5 phút nếu chưa thanh toán.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: CinemaColors.warning),
       ),
       const SizedBox(height: 28),
       Card(
@@ -114,15 +116,10 @@ class _PaymentOptions extends StatelessWidget {
 }
 
 class _PaymentResult extends StatelessWidget {
-  const _PaymentResult({
-    required this.booking,
-    required this.result,
-    required this.onRetry,
-  });
+  const _PaymentResult({required this.booking, required this.result});
 
   final CreatedBooking booking;
   final DemoPaymentResult result;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -182,15 +179,14 @@ class _PaymentResult extends StatelessWidget {
             child: const Text('Về tài khoản'),
           )
         else ...[
-          FilledButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Thử thanh toán lại'),
+          FilledButton(
+            onPressed: () => context.go('/account'),
+            child: const Text('Về tài khoản'),
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Quay lại đơn hàng'),
+            onPressed: () => context.go('/movies'),
+            child: const Text('Đặt vé mới'),
           ),
         ],
       ],
