@@ -20,6 +20,7 @@ public interface TicketRepository extends JpaRepository<Ticket,String> {
 
     List<Ticket> findByRedemptionStatusFalse();
     Page<Ticket> findByBooking_UserId(String userId, Pageable pageable);
+    List<Ticket> findByBooking_UserIdOrderByIdDesc(String userId);
 
 
 }

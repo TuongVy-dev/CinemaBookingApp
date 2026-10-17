@@ -174,9 +174,14 @@ class _PaymentResult extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         if (success)
-          FilledButton(
-            onPressed: () => context.go('/account'),
-            child: const Text('Về tài khoản'),
+          FilledButton.icon(
+            onPressed: result.ticketId == null
+                ? null
+                : () => context.go(
+                    '/tickets/${Uri.encodeComponent(result.ticketId!)}',
+                  ),
+            icon: const Icon(Icons.confirmation_num_outlined),
+            label: const Text('Xem vé đã phát hành'),
           )
         else ...[
           FilledButton(
