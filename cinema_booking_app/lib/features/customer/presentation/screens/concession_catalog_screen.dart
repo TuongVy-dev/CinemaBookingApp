@@ -13,6 +13,7 @@ class ConcessionCatalogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ConcessionsViewModel>();
+    final items = vm.filteredCatalog;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -43,22 +44,57 @@ class ConcessionCatalogScreen extends StatelessWidget {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 390),
-          child: vm.busy && vm.catalog.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : vm.error != null && vm.catalog.isEmpty
-              ? AsyncStateView(
-                  message: vm.error!,
-                  retry: vm.load,
-                  icon: Icons.error_outline,
-                )
-              : vm.catalog.isEmpty
-              ? const AsyncStateView(message: 'Không có món phù hợp.')
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: vm.catalog.length,
-                  itemBuilder: (context, index) =>
-                      _ConcessionTile(vm.catalog[index]),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ConcessionFilter.values.map((filter) {
+                    final label = switch (filter) {
+                      ConcessionFilter.all => 'Tất cả',
+                      ConcessionFilter.popcorn => 'Bắp',
+                      ConcessionFilter.drink => 'Nước',
+                    };
+
+                    return ChoiceChip(
+                      label: Text(label),
+                      shape: const StadiumBorder(),
+                      selected: vm.filter == filter,
+                      onSelected: (selected) {
+                        if (selected) {
+                          vm.setFilter(filter);
+                        }
+                      },
+                    );
+                  }).toList(),
                 ),
+              ),
+              Expanded(
+                child: vm.busy && vm.catalog.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : vm.error != null && vm.catalog.isEmpty
+                    ? AsyncStateView(
+                        message: vm.error!,
+                        retry: vm.load,
+                        icon: Icons.error_outline,
+                      )
+                    : vm.catalog.isEmpty
+                    ? const AsyncStateView(message: 'Chưa có bắp/nước.')
+                    : items.isEmpty
+                    ? const AsyncStateView(
+                        message: 'Không có món thuộc loại đã chọn.',
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) =>
+                            _ConcessionTile(items[index]),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: SafeArea(

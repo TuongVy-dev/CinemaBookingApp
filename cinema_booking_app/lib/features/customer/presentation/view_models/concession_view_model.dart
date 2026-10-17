@@ -4,6 +4,8 @@ import '../../../../core/errors/app_failure.dart';
 import '../../domain/entities/cinema_models.dart';
 import '../../domain/repositories/concession_repository.dart';
 
+enum ConcessionFilter { all, popcorn, drink }
+
 class ConcessionsViewModel extends ChangeNotifier {
   ConcessionsViewModel(this.repository);
 
@@ -18,6 +20,33 @@ class ConcessionsViewModel extends ChangeNotifier {
   int _loadRequest = 0;
   String? _sessionKey;
   bool _sessionInitialized = false;
+
+  ConcessionFilter _filter = ConcessionFilter.all;
+
+  ConcessionFilter get filter => _filter;
+
+  List<CinemaConcession> get filteredCatalog {
+    final prefix = switch (_filter) {
+      ConcessionFilter.all => null,
+      ConcessionFilter.popcorn => 'PC',
+      ConcessionFilter.drink => 'DR',
+    };
+
+    return List<CinemaConcession>.unmodifiable(
+      prefix == null
+          ? catalog
+          : catalog.where((item) => item.id.startsWith(prefix)),
+    );
+  }
+
+  void setFilter(ConcessionFilter value) {
+    if (_disposed || _filter == value) {
+      return;
+    }
+
+    _filter = value;
+    notifyListeners();
+  }
 
   void syncSession(String? sessionKey) {
     if (_disposed || (_sessionInitialized && _sessionKey == sessionKey)) {
@@ -116,6 +145,7 @@ class ConcessionsViewModel extends ChangeNotifier {
     _loading = false;
     cart = {};
     error = null;
+    _filter = ConcessionFilter.all;
 
     if (clearCatalog) {
       catalog = [];
