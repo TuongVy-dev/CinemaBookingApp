@@ -62,22 +62,7 @@ class BookingCreatedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () => showDialog<void>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('Thanh toán demo'),
-                    content: const Text(
-                      'Chức năng thanh toán demo sẽ được triển khai ở bước tiếp theo. '
-                      'Đơn đã được lưu với trạng thái chờ thanh toán.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: const Text('Đã hiểu'),
-                      ),
-                    ],
-                  ),
-                ),
+                onPressed: () => context.push('/demo-payment', extra: booking),
                 icon: const Icon(Icons.payment_outlined),
                 label: const Text('Thanh toán demo'),
               ),

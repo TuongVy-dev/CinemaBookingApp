@@ -10,8 +10,10 @@ import '../features/account/presentation/screens/login_registration_screen.dart'
 import '../features/account/presentation/screens/reset_password_screen.dart';
 import '../features/bookings_and_payment/domain/entities/booking_summary.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_created_screen.dart';
+import '../features/bookings_and_payment/presentation/screens/demo_payment_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_summary_debug_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_summary_screen.dart';
+import '../features/bookings_and_payment/presentation/view_models/demo_payment_view_model.dart';
 import '../features/movies/presentation/screens/movie_detail_screen.dart';
 import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
@@ -113,6 +115,19 @@ final appRouter = GoRouter(
           return BookingCreatedScreen(booking: booking);
         }
         return const _FeaturePlaceholder(title: 'Đặt vé');
+      },
+    ),
+    GoRoute(
+      path: '/demo-payment',
+      builder: (context, state) {
+        final booking = state.extra;
+        if (booking is CreatedBooking) {
+          return ChangeNotifierProvider<DemoPaymentViewModel>(
+            create: (_) => DemoPaymentViewModel(),
+            child: DemoPaymentScreen(booking: booking),
+          );
+        }
+        return const _FeaturePlaceholder(title: 'Thanh toán demo');
       },
     ),
   ],

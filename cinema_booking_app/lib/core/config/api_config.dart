@@ -38,6 +38,8 @@ class ApiConfig {
   static const me = '/api/auth/me';
   static const customerBookings = '/api/customer/bookings';
   static const customerBookingPreview = '$customerBookings/preview';
+  static String customerDemoPayment(String bookingId) =>
+      '$customerBookings/${Uri.encodeComponent(bookingId)}/demo-payment';
 
   static const publicMovies = '/api/public/movies';
   static const publicMovieDetail = '/api/public/movies/';

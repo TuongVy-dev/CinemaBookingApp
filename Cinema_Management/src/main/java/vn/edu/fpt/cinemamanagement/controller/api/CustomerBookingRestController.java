@@ -3,14 +3,17 @@ package vn.edu.fpt.cinemamanagement.controller.api;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.edu.fpt.cinemamanagement.dto.request.CustomerBookingRequestDTO;
+import vn.edu.fpt.cinemamanagement.dto.request.DemoPaymentRequestDTO;
 import vn.edu.fpt.cinemamanagement.dto.response.CustomerBookingCreatedResponseDTO;
 import vn.edu.fpt.cinemamanagement.repositories.CustomerRepository;
 import vn.edu.fpt.cinemamanagement.services.CustomerBookingService;
+import vn.edu.fpt.cinemamanagement.services.CustomerDemoPaymentService;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -23,6 +26,7 @@ public class CustomerBookingRestController {
     private static final int IDEMPOTENCY_CACHE_LIMIT = 500;
 
     private final CustomerBookingService bookingService;
+    private final CustomerDemoPaymentService demoPaymentService;
     private final CustomerRepository customerRepository;
     private final Map<String, IdempotencyEntry> idempotencyResponses = new LinkedHashMap<>() {
         @Override
@@ -31,9 +35,35 @@ public class CustomerBookingRestController {
         }
     };
 
-    public CustomerBookingRestController(CustomerBookingService bookingService, CustomerRepository customerRepository) {
+    public CustomerBookingRestController(
+            CustomerBookingService bookingService,
+            CustomerDemoPaymentService demoPaymentService,
+            CustomerRepository customerRepository
+    ) {
         this.bookingService = bookingService;
+        this.demoPaymentService = demoPaymentService;
         this.customerRepository = customerRepository;
+    }
+
+    @PostMapping("/{bookingId}/demo-payment")
+    public ResponseEntity<?> processDemoPayment(
+            Principal principal,
+            @PathVariable String bookingId,
+            @RequestBody DemoPaymentRequestDTO request
+    ) {
+        String customerId = customerId(principal);
+        if (customerId == null) return unauthorized();
+        try {
+            return ResponseEntity.ok(
+                    demoPaymentService.process(customerId, bookingId, request == null ? null : request.getOutcome())
+            );
+        } catch (SecurityException exception) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", exception.getMessage()));
+        } catch (java.util.NoSuchElementException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", exception.getMessage()));
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
     }
 
     @PostMapping("/preview")
