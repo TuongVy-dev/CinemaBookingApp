@@ -35,12 +35,8 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
   @override
   void initState() {
     super.initState();
+    // Lần tải đầu (phim + hôm nay) do ViewModel của route thực hiện.
     _selectedDate = DateUtils.dateOnly(DateTime.now());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<ShowtimeViewModel>().loadMovie(widget.movieId);
-      _loadShowtimes();
-    });
   }
 
   void _loadShowtimes() {
