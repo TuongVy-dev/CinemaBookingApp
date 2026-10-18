@@ -20,7 +20,10 @@ import '../features/bookings_and_payment/presentation/view_models/customer_ticke
 import '../features/movies/presentation/screens/movie_detail_screen.dart';
 import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
+import '../features/movies/domain/repositories/movie_repository.dart';
+import '../features/showtime_and_seat/domain/repositories/showtime_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/showtime_screen.dart';
+import '../features/showtime_and_seat/presentation/view_models/showtime_view_model.dart';
 import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
 import '../features/showtime_and_seat/presentation/view_models/seat_selection_view_model.dart';
@@ -73,10 +76,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/showtimes/:movieId',
       builder: (context, state) {
+        final movieId = state.pathParameters['movieId']!;
         final extra = state.extra;
-        return ShowtimeSelectionScreen(
-          movieId: state.pathParameters['movieId']!,
-          movieTitle: extra is String ? extra : 'null',
+        // ViewModel theo route để suất chiếu của phim trước không hiện lại.
+        return ChangeNotifierProvider<ShowtimeViewModel>(
+          create: (context) =>
+              ShowtimeViewModel(
+                  context.read<ShowtimeRepository>(),
+                  context.read<MovieRepository>(),
+                )
+                ..loadMovie(movieId)
+                ..load(movieId, DateUtils.dateOnly(DateTime.now())),
+          child: ShowtimeSelectionScreen(
+            movieId: movieId,
+            movieTitle: extra is String ? extra : null,
+          ),
         );
       },
     ),

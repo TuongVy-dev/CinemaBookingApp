@@ -58,10 +58,10 @@ class ApiConfig {
   }
 
   //Ngan
-  static const showtimes = '/api/showtimes/movie';
+  static const showtimes = '/api/public/showtimes/movie';
 
   static String showtimesFor({required String movieId, required String date}) =>
-      '/api/showtimes/movie/$movieId?date=$date';
+      '$showtimes/$movieId?date=$date';
 
   static String showtimeSeats(String showtimeId) =>
       '/api/showtimes/${Uri.encodeComponent(showtimeId)}/seats';
