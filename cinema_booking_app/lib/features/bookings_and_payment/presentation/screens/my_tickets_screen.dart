@@ -68,56 +68,72 @@ class _TicketCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Card(
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 62,
-              decoration: BoxDecoration(
-                color: CinemaColors.red.withValues(alpha: .16),
-                borderRadius: BorderRadius.circular(10),
+  Widget build(BuildContext context) {
+    final isExpired = ticket.isExpired;
+    final accentColor = isExpired ? CinemaColors.muted : CinemaColors.red;
+
+    return Card(
+      color: isExpired ? CinemaColors.surface.withValues(alpha: .72) : null,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: .16),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.confirmation_num_outlined,
+                  color: accentColor,
+                ),
               ),
-              child: const Icon(
-                Icons.confirmation_num_outlined,
-                color: CinemaColors.red,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ticket.movieTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '${DateFormat('dd/MM/yyyy').format(ticket.showDate)} · ${_clock(ticket.startTime)}',
+                      style: const TextStyle(color: CinemaColors.muted),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Phòng ${ticket.roomId} · ${ticket.seatLabels.join(', ')}',
+                      style: const TextStyle(color: CinemaColors.muted),
+                    ),
+                    if (isExpired) ...[
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Đã hết hiệu lực',
+                        style: TextStyle(
+                          color: CinemaColors.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ticket.movieTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    '${DateFormat('dd/MM/yyyy').format(ticket.showDate)} · ${_clock(ticket.startTime)}',
-                    style: const TextStyle(color: CinemaColors.muted),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Phòng ${ticket.roomId} · ${ticket.seatLabels.join(', ')}',
-                    style: const TextStyle(color: CinemaColors.muted),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: CinemaColors.muted),
-          ],
+              const Icon(Icons.chevron_right, color: CinemaColors.muted),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 String _clock(String value) =>

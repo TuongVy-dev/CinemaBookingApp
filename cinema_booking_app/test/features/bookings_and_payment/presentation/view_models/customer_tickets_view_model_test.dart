@@ -5,6 +5,17 @@ import 'package:cinema_booking_app/features/bookings_and_payment/presentation/vi
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('marks a ticket expired from its showtime, not from payment status', () {
+    expect(
+      _FakeTicketRepository._ticket.isExpiredAt(DateTime(2026, 10, 17, 19)),
+      isTrue,
+    );
+    expect(
+      _FakeTicketRepository._ticket.isExpiredAt(DateTime(2026, 10, 17, 18, 59)),
+      isFalse,
+    );
+  });
+
   test('loads tickets issued for the signed-in customer', () async {
     final viewModel = CustomerTicketsViewModel(_FakeTicketRepository());
 

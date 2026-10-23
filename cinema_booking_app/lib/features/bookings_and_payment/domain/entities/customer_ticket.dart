@@ -22,6 +22,24 @@ class CustomerTicket {
   final List<CustomerTicketConcession> concessionItems;
   final int totalAmount;
   final bool checkedIn;
+
+  /// Local showtime supplied by the server. A ticket is no longer usable from
+  /// the moment its showtime begins, but it remains available as a record.
+  DateTime get showtimeStartsAt {
+    final parts = startTime.split(':').map(int.tryParse).toList();
+    return DateTime(
+      showDate.year,
+      showDate.month,
+      showDate.day,
+      parts.isNotEmpty ? parts[0] ?? 0 : 0,
+      parts.length > 1 ? parts[1] ?? 0 : 0,
+      parts.length > 2 ? parts[2] ?? 0 : 0,
+    );
+  }
+
+  bool isExpiredAt(DateTime now) => !now.isBefore(showtimeStartsAt);
+
+  bool get isExpired => isExpiredAt(DateTime.now());
 }
 
 class CustomerTicketConcession {
