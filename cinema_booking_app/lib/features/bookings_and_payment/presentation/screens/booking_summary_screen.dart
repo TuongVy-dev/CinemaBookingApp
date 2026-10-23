@@ -32,6 +32,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
     _idempotencyKey = _newIdempotencyKey();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
       context.read<BookingSummaryViewModel>().preview(_selection);
     });
   }
@@ -43,9 +46,18 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   }
 
   void _refreshQuote({String? voucherCode}) {
-    _selection = _selection.copyWith(voucherCode: voucherCode);
+    final viewModel = context.read<BookingSummaryViewModel>();
+
+    if (viewModel.loading || viewModel.submitting) {
+      return;
+    }
+
+    _selection = _selection.copyWith(
+      voucherCode: voucherCode?.trim().toUpperCase(),
+    );
     _idempotencyKey = _newIdempotencyKey();
-    context.read<BookingSummaryViewModel>().preview(_selection);
+
+    viewModel.preview(_selection);
   }
 
   Future<void> _createBooking() async {
@@ -77,10 +89,25 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       body: viewModel.loading
           ? const Center(child: CircularProgressIndicator())
           : quote == null
-          ? AsyncStateView(
-              icon: Icons.receipt_long_outlined,
-              message: viewModel.error ?? 'Không thể tải thông tin đơn.',
-              retry: () => _refreshQuote(voucherCode: _selection.voucherCode),
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  viewModel.error ?? 'Không thể tải thông tin đơn.',
+                  style: const TextStyle(color: CinemaColors.red),
+                ),
+                const SizedBox(height: 12),
+                _voucherCard(null, viewModel.submitting),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: viewModel.submitting
+                      ? null
+                      : () =>
+                            _refreshQuote(voucherCode: _selection.voucherCode),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Thử lại'),
+                ),
+              ],
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
@@ -111,7 +138,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                         ),
                 ),
                 const SizedBox(height: 12),
-                _voucherCard(quote, viewModel.loading),
+                _voucherCard(quote, viewModel.loading || viewModel.submitting),
                 const SizedBox(height: 12),
                 _priceCard(quote),
                 const SizedBox(height: 16),
@@ -128,7 +155,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton(
-                  onPressed: viewModel.submitting ? null : _createBooking,
+                  onPressed: viewModel.loading || viewModel.submitting
+                      ? null
+                      : _createBooking,
                   child: viewModel.submitting
                       ? const SizedBox(
                           height: 20,
@@ -142,61 +171,80 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
   }
 
-  Widget _voucherCard(BookingQuote quote, bool loading) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Voucher', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _voucherController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    hintText: 'Nhập mã giảm giá',
-                    prefixIcon: Icon(Icons.sell_outlined),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: loading
-                    ? null
-                    : () => _refreshQuote(
-                        voucherCode: _voucherController.text.trim(),
-                      ),
-                child: const Text('Áp dụng'),
-              ),
-            ],
-          ),
-          if (quote.voucher != null) ...[
+  Widget _voucherCard(BookingQuote? quote, bool busy) {
+    final appliedVoucher = quote?.voucher;
+    final hasVoucherCode = _selection.voucherCode?.trim().isNotEmpty ?? false;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Voucher',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 10),
-            Row(
+            TextField(
+              controller: _voucherController,
+              enabled: !busy,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                hintText: 'Nhập mã giảm giá',
+                prefixIcon: Icon(Icons.sell_outlined),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
-                  child: Text(
-                    'Đã áp dụng ${quote.voucher!.code}',
-                    style: const TextStyle(color: CinemaColors.warning),
+                FilledButton(
+                  onPressed: busy
+                      ? null
+                      : () {
+                          final code = _voucherController.text
+                              .trim()
+                              .toUpperCase();
+
+                          if (code.isEmpty) {
+                            showCinemaMessage(
+                              context,
+                              'Vui lòng nhập mã voucher.',
+                              isError: true,
+                            );
+                            return;
+                          }
+
+                          _refreshQuote(voucherCode: code);
+                        },
+                  child: const Text('Áp dụng'),
+                ),
+                if (hasVoucherCode)
+                  TextButton(
+                    onPressed: busy
+                        ? null
+                        : () {
+                            _voucherController.clear();
+                            _refreshQuote(voucherCode: '');
+                          },
+                    child: const Text('Gỡ voucher'),
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    _voucherController.clear();
-                    _refreshQuote(voucherCode: '');
-                  },
-                  child: const Text('Gỡ'),
-                ),
               ],
             ),
+            if (appliedVoucher != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Đã áp dụng ${appliedVoucher.code}',
+                style: const TextStyle(color: CinemaColors.warning),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _priceCard(BookingQuote quote) => _SectionCard(
     title: 'Tổng thanh toán',
