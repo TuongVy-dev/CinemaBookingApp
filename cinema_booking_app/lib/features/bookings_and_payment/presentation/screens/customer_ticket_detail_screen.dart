@@ -45,7 +45,9 @@ class CustomerTicketDetailScreen extends StatelessWidget {
           _IssuedTicketCard(ticket: ticket),
           const SizedBox(height: 20),
           Text(
-            ticket.checkedIn
+            ticket.isExpired
+                ? 'Suất chiếu đã qua. Vé chỉ còn dùng để xem thông tin.'
+                : ticket.checkedIn
                 ? 'Vé đã được sử dụng.'
                 : 'Xuất trình mã vé khi check-in.',
             textAlign: TextAlign.center,
@@ -74,7 +76,9 @@ class _IssuedTicketCard extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          color: ticket.checkedIn ? CinemaColors.muted : CinemaColors.red,
+          color: ticket.checkedIn || ticket.isExpired
+              ? CinemaColors.muted
+              : CinemaColors.red,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           child: const Row(
             children: [
