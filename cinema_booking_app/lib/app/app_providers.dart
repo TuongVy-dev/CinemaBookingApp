@@ -19,6 +19,9 @@ import '../features/showtime_and_seat/data/services/showtime_api_service.dart';
 import '../features/showtime_and_seat/data/repositories/seat_map_repository_impl.dart';
 import '../features/showtime_and_seat/data/services/seat_map_api_service.dart';
 import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
+import '../features/showtime_and_seat/data/repositories/seat_hold_repository_impl.dart';
+import '../features/showtime_and_seat/data/services/seat_hold_api_service.dart';
+import '../features/showtime_and_seat/domain/repositories/seat_hold_repository.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({super.key, required this.child});
@@ -38,6 +41,11 @@ class AppProviders extends StatelessWidget {
       Provider<SeatMapRepository>(
         create: (context) => SeatMapRepositoryImpl(
           SeatMapApiService(context.read<ApiClient>().dio),
+        ),
+      ),
+      Provider<SeatHoldRepository>(
+        create: (context) => SeatHoldRepositoryImpl(
+          SeatHoldApiService(context.read<ApiClient>().dio),
         ),
       ),
       Provider<MovieRepository>(

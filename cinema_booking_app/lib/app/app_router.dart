@@ -23,6 +23,7 @@ import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 import '../features/movies/domain/repositories/movie_repository.dart';
 import '../features/showtime_and_seat/domain/repositories/showtime_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/showtime_screen.dart';
+import '../features/showtime_and_seat/domain/repositories/seat_hold_repository.dart';
 import '../features/showtime_and_seat/presentation/view_models/showtime_view_model.dart';
 import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
@@ -99,9 +100,10 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final showtimeId = state.pathParameters['showtimeId']!;
         return ChangeNotifierProvider<SeatSelectionViewModel>(
-          create: (context) =>
-              SeatSelectionViewModel(context.read<SeatMapRepository>())
-                ..load(showtimeId),
+          create: (context) => SeatSelectionViewModel(
+            context.read<SeatMapRepository>(),
+            context.read<SeatHoldRepository>(),
+          )..load(showtimeId),
           child: SeatSelectionScreen(showtimeId: showtimeId),
         );
       },

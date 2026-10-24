@@ -134,7 +134,9 @@ class SeatPalette {
   );
 
   static SeatPalette of(Seat seat, {required bool selected}) {
-    if (selected && seat.isSelectable) return SeatPalette.selected;
+    // ViewModel chỉ đánh dấu selected cho ghế mình chọn/đang giữ (có thể đã
+    // PENDING trên server), nên selected luôn được ưu tiên.
+    if (selected) return SeatPalette.selected;
     return switch (seat.status) {
       SeatStatus.available =>
         seat.type == SeatType.vip ? SeatPalette.vip : SeatPalette.standard,
@@ -158,12 +160,14 @@ class SeatTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  String get _statusLabel => switch (seat.status) {
-    SeatStatus.available => selected ? 'đang chọn' : 'còn trống',
-    SeatStatus.pending => 'đang được giữ',
-    SeatStatus.unavailable => 'đã đặt',
-    SeatStatus.unknown => 'không khả dụng',
-  };
+  String get _statusLabel => selected
+      ? 'đang chọn'
+      : switch (seat.status) {
+          SeatStatus.available => 'còn trống',
+          SeatStatus.pending => 'đang được giữ',
+          SeatStatus.unavailable => 'đã đặt',
+          SeatStatus.unknown => 'không khả dụng',
+        };
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +202,7 @@ class SeatTile extends StatelessWidget {
                     color: palette.text,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    decoration: seat.status == SeatStatus.available
+                    decoration: selected || seat.status == SeatStatus.available
                         ? null
                         : TextDecoration.lineThrough,
                     decorationColor: palette.text,
