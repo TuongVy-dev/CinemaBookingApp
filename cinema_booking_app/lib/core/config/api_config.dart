@@ -60,4 +60,9 @@ class ApiConfig {
 
   static String showtimeSeats(String showtimeId) =>
       '/api/showtimes/${Uri.encodeComponent(showtimeId)}/seats';
+
+  static const customerSeatHolds = '/api/customer/seat-holds';
+
+  static String customerSeatHold(String holdId) =>
+      '$customerSeatHolds/${Uri.encodeComponent(holdId)}';
 }

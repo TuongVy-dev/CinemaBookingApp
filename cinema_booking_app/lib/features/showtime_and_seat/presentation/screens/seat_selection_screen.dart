@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/ui/cinema_theme.dart';
@@ -27,6 +28,24 @@ class SeatSelectionScreen extends StatelessWidget {
       SeatToggleResult.selected || SeatToggleResult.deselected => null,
     };
     if (message == null) return;
+    _showMessage(context, message);
+  }
+
+  /// Giữ ghế trên server rồi mới sang bước chọn bắp nước. Dùng `push` để
+  /// màn hình ghế (và hold) vẫn còn trong stack khi người dùng quay lại.
+  Future<void> _onContinue(BuildContext context) async {
+    final vm = context.read<SeatSelectionViewModel>();
+    final error = await vm.holdSelectedSeats();
+    if (!context.mounted) return;
+    final hold = vm.state.hold;
+    if (error != null) {
+      _showMessage(context, error);
+    } else if (hold != null) {
+      context.push('/concessions', extra: hold);
+    }
+  }
+
+  void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
@@ -77,7 +96,9 @@ class SeatSelectionScreen extends StatelessWidget {
           : _SelectionBar(
               selectedSeats: state.selectedSeats,
               maxSeats: vm.maxSeats,
+              isHolding: state.isHolding,
               onClear: vm.clearSelection,
+              onContinue: () => _onContinue(context),
             ),
     );
   }
@@ -202,12 +223,16 @@ class _SelectionBar extends StatelessWidget {
   const _SelectionBar({
     required this.selectedSeats,
     required this.maxSeats,
+    required this.isHolding,
     required this.onClear,
+    required this.onContinue,
   });
 
   final List<Seat> selectedSeats;
   final int maxSeats;
+  final bool isHolding;
   final VoidCallback onClear;
+  final VoidCallback onContinue;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -237,15 +262,26 @@ class _SelectionBar extends StatelessWidget {
                   ),
                 ),
                 if (selectedSeats.isNotEmpty)
-                  TextButton(onPressed: onClear, child: const Text('Bỏ chọn')),
+                  TextButton(
+                    onPressed: isHolding ? null : onClear,
+                    child: const Text('Bỏ chọn'),
+                  ),
               ],
             ),
             const SizedBox(height: 8),
-            // Giữ ghế/checkout thuộc bước sau; nút tắt để không tạo luồng giả.
-            const ElevatedButton(onPressed: null, child: Text('Tiếp tục')),
+            ElevatedButton(
+              onPressed: selectedSeats.isEmpty || isHolding ? null : onContinue,
+              child: isHolding
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Tiếp tục'),
+            ),
             const SizedBox(height: 4),
             const Text(
-              'Giữ ghế và thanh toán sẽ được bổ sung ở bước tiếp theo.',
+              'Ghế sẽ được giữ cho bạn khi bấm Tiếp tục.',
               textAlign: TextAlign.center,
               style: TextStyle(color: CinemaColors.muted, fontSize: 11),
             ),
