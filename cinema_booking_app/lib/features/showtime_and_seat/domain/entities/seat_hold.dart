@@ -8,6 +8,7 @@ class SeatHold {
     required this.seatIds,
     required this.expiresAt,
     required this.serverTime,
+    required this.deadline,
   });
 
   final String holdId;
@@ -19,4 +20,16 @@ class SeatHold {
   /// Hạn giữ theo đồng hồ server; so với [serverTime], không so với giờ máy.
   final DateTime expiresAt;
   final DateTime serverTime;
+
+  /// Mốc hết hạn quy đổi sang đồng hồ máy lúc nhận response
+  /// (`giờ máy + (expiresAt - serverTime)`), nên không bị lệch nếu giờ máy
+  /// sai. Dùng mốc này cho đếm ngược và hẹn giờ.
+  final DateTime deadline;
+
+  Duration remainingAt(DateTime now) {
+    final remaining = deadline.difference(now);
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  bool isExpiredAt(DateTime now) => !deadline.isAfter(now);
 }

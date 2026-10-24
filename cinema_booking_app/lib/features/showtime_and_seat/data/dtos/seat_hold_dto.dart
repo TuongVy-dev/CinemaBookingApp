@@ -30,13 +30,20 @@ class SeatHoldDto {
     );
   }
 
-  SeatHold toEntity() => SeatHold(
-    holdId: holdId,
-    showtimeId: showtimeId,
-    seatIds: seatIds,
-    expiresAt: _parseInstant(expiresAt),
-    serverTime: _parseInstant(serverTime),
-  );
+  /// [receivedAt] là giờ máy lúc nhận response, dùng để tính
+  /// [SeatHold.deadline].
+  SeatHold toEntity({required DateTime receivedAt}) {
+    final expires = _parseInstant(expiresAt);
+    final server = _parseInstant(serverTime);
+    return SeatHold(
+      holdId: holdId,
+      showtimeId: showtimeId,
+      seatIds: seatIds,
+      expiresAt: expires,
+      serverTime: server,
+      deadline: receivedAt.add(expires.difference(server)),
+    );
+  }
 
   /// Server gửi ISO-8601 có offset nên giá trị là thời điểm tuyệt đối.
   static DateTime _parseInstant(String value) {

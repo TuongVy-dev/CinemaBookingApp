@@ -4,7 +4,8 @@ import '../entities/seat_hold.dart';
 
 abstract interface class SeatHoldRepository {
   /// Giữ [seatIds] của suất chiếu; server thay thế hold cũ của khách cho
-  /// cùng suất chiếu.
+  /// cùng suất chiếu. Xung đột ghế trả `Failure` có
+  /// `errors['code'] == 'SEAT_UNAVAILABLE'` và `errors['seatIds']`.
   Future<ApiResult<SeatHold>> holdSeats({
     required String showtimeId,
     required List<String> seatIds,

@@ -26,7 +26,8 @@ class SeatHoldRepositoryImpl implements SeatHoldRepository {
         throw const FormatException('Expected a seat hold object.');
       }
       return ApiResult.success(
-        SeatHoldDto.fromJson(Map<String, dynamic>.from(body)).toEntity(),
+        SeatHoldDto.fromJson(Map<String, dynamic>.from(body))
+            .toEntity(receivedAt: DateTime.now()),
       );
     } on DioException catch (error) {
       return ApiResult.failure(
@@ -58,6 +59,8 @@ class SeatHoldRepositoryImpl implements SeatHoldRepository {
     }
   }
 
+  /// Giữ nguyên `code`/`seatIds` của backend trong [Failure.errors] để UI
+  /// hiển thị ghế bị xung đột.
   Failure _failureFrom(DioException error, {required String fallback}) {
     final statusCode = error.response?.statusCode;
     // Chưa đăng nhập: Spring Security chuyển hướng 302 về /login.
@@ -71,7 +74,11 @@ class SeatHoldRepositoryImpl implements SeatHoldRepository {
       return const Failure('Không thể kết nối máy chủ. Vui lòng thử lại.');
     }
     final payload = error.response?.data;
-    final message = payload is Map ? payload['message']?.toString() : null;
-    return Failure(message ?? fallback, statusCode: statusCode);
+    final errors = payload is Map ? Map<String, dynamic>.from(payload) : null;
+    return Failure(
+      errors?['message']?.toString() ?? fallback,
+      statusCode: statusCode,
+      errors: errors,
+    );
   }
 }

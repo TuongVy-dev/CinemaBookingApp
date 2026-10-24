@@ -75,7 +75,8 @@ public class CustomerSeatHoldService {
             throw new SeatHoldException(
                     HttpStatus.CONFLICT,
                     "SEAT_UNAVAILABLE",
-                    "Ghế không còn trống: " + String.join(", ", unavailable.stream().map(this::seatCode).toList())
+                    "Ghế không còn trống: " + String.join(", ", unavailable.stream().map(this::seatCode).toList()),
+                    unavailable.stream().map(ShowtimeSeat::getShowtimeSeatID).toList()
             );
         }
 

@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/ui/cinema_theme.dart';
 import '../../../../core/ui/cinema_widgets.dart';
+import '../../domain/entities/seat_hold.dart';
 import '../../domain/entities/seat_map.dart';
 import '../view_models/seat_selection_view_model.dart';
+import '../widgets/seat_hold_countdown.dart';
 import '../widgets/seat_layout_template.dart';
 import '../widgets/seat_map_view.dart';
 
@@ -25,6 +27,10 @@ class SeatSelectionScreen extends StatelessWidget {
             : 'Ghế ${seat.code} không còn trống.',
       SeatToggleResult.limitReached =>
         'Bạn chỉ có thể chọn tối đa ${vm.maxSeats} ghế.',
+      SeatToggleResult.differentRow =>
+        'Chỉ được chọn các ghế trong cùng một hàng.',
+      SeatToggleResult.notAdjacent =>
+        'Vui lòng chọn ghế liền kề với ghế đã chọn.',
       SeatToggleResult.selected || SeatToggleResult.deselected => null,
     };
     if (message == null) return;
@@ -97,6 +103,8 @@ class SeatSelectionScreen extends StatelessWidget {
               selectedSeats: state.selectedSeats,
               maxSeats: vm.maxSeats,
               isHolding: state.isHolding,
+              hold: state.hold,
+              holdExpired: state.holdExpired,
               onClear: vm.clearSelection,
               onContinue: () => _onContinue(context),
             ),
@@ -224,6 +232,8 @@ class _SelectionBar extends StatelessWidget {
     required this.selectedSeats,
     required this.maxSeats,
     required this.isHolding,
+    required this.hold,
+    required this.holdExpired,
     required this.onClear,
     required this.onContinue,
   });
@@ -231,6 +241,8 @@ class _SelectionBar extends StatelessWidget {
   final List<Seat> selectedSeats;
   final int maxSeats;
   final bool isHolding;
+  final SeatHold? hold;
+  final bool holdExpired;
   final VoidCallback onClear;
   final VoidCallback onContinue;
 
@@ -248,6 +260,20 @@ class _SelectionBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (hold != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Center(child: SeatHoldCountdown(hold: hold!)),
+              )
+            else if (holdExpired)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 6),
+                child: Text(
+                  'Hết thời gian giữ ghế. Bấm Tiếp tục để giữ lại.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: CinemaColors.red, fontSize: 12),
+                ),
+              ),
             Row(
               children: [
                 Expanded(
@@ -281,7 +307,7 @@ class _SelectionBar extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              'Ghế sẽ được giữ cho bạn khi bấm Tiếp tục.',
+              'Ghế sẽ được giữ cho bạn trong 5 phút khi bấm Tiếp tục.',
               textAlign: TextAlign.center,
               style: TextStyle(color: CinemaColors.muted, fontSize: 11),
             ),

@@ -14,6 +14,7 @@ import vn.edu.fpt.cinemamanagement.repositories.CustomerRepository;
 import vn.edu.fpt.cinemamanagement.services.CustomerSeatHoldService;
 
 import java.security.Principal;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -23,7 +24,8 @@ import java.util.Map;
  *   <li>{@code POST /api/customer/seat-holds} → 201 + hold</li>
  *   <li>{@code DELETE /api/customer/seat-holds/{holdId}} → 204</li>
  * </ul>
- * Lỗi trả {@code {"code", "message"}}.
+ * Lỗi trả {@code {"code", "message", "seatIds"?}}; 409 {@code SEAT_UNAVAILABLE}
+ * kèm {@code seatIds} của ghế vừa bị người khác giữ/đặt.
  */
 @RestController
 @RequestMapping("/api/customer/seat-holds")
@@ -74,10 +76,11 @@ public class CustomerSeatHoldRestController {
         ));
     }
 
-    private ResponseEntity<Map<String, String>> error(SeatHoldException exception) {
-        return ResponseEntity.status(exception.getStatus()).body(Map.of(
-                "code", exception.getCode(),
-                "message", exception.getMessage()
-        ));
+    private ResponseEntity<Map<String, Object>> error(SeatHoldException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", exception.getCode());
+        body.put("message", exception.getMessage());
+        if (!exception.getSeatIds().isEmpty()) body.put("seatIds", exception.getSeatIds());
+        return ResponseEntity.status(exception.getStatus()).body(body);
     }
 }
