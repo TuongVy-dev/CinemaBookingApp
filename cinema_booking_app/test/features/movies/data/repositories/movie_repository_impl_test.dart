@@ -120,7 +120,8 @@ void main() {
       expect(result, isA<FailureResult<List<Movie>>>());
       expect(
         (result as FailureResult<List<Movie>>).failure.message,
-        'Không thể kết nối máy chủ. Vui lòng thử lại.',
+        'Không thể kết nối máy chủ tại ${ApiConfig.baseUrl}. '
+        'Kiểm tra API_BASE_URL và kết nối mạng rồi thử lại.',
       );
     });
 

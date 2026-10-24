@@ -38,6 +38,11 @@ class ApiConfig {
   static const me = '/api/auth/me';
   static const customerBookings = '/api/customer/bookings';
   static const customerBookingPreview = '$customerBookings/preview';
+  static const customerTickets = '/api/customer/tickets';
+  static String customerDemoPayment(String bookingId) =>
+      '$customerBookings/${Uri.encodeComponent(bookingId)}/demo-payment';
+  static String customerTicket(String ticketId) =>
+      '$customerTickets/${Uri.encodeComponent(ticketId)}';
 
   static const publicMovies = '/api/public/movies';
   static const publicMovieDetail = '/api/public/movies/';
@@ -56,7 +61,7 @@ class ApiConfig {
   static const showtimes = '/api/showtimes/movie';
 
   static String showtimesFor({required String movieId, required String date}) =>
-      '/api/showtimes/movie/$movieId?date=$date';
+      '$showtimes/$movieId?date=$date';
 
   static String showtimeSeats(String showtimeId) =>
       '/api/showtimes/${Uri.encodeComponent(showtimeId)}/seats';

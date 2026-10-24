@@ -10,13 +10,21 @@ import '../features/account/presentation/screens/login_registration_screen.dart'
 import '../features/account/presentation/screens/reset_password_screen.dart';
 import '../features/bookings_and_payment/domain/entities/booking_summary.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_created_screen.dart';
+import '../features/bookings_and_payment/presentation/screens/customer_ticket_detail_screen.dart';
+import '../features/bookings_and_payment/presentation/screens/demo_payment_screen.dart';
+import '../features/bookings_and_payment/presentation/screens/my_tickets_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_summary_debug_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_summary_screen.dart';
+import '../features/bookings_and_payment/presentation/view_models/demo_payment_view_model.dart';
+import '../features/bookings_and_payment/presentation/view_models/customer_tickets_view_model.dart';
 import '../features/movies/presentation/screens/movie_detail_screen.dart';
 import '../features/movies/presentation/screens/movie_discovery_screen.dart';
 
+import '../features/movies/domain/repositories/movie_repository.dart';
+import '../features/showtime_and_seat/domain/repositories/showtime_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/showtime_screen.dart';
 import '../features/showtime_and_seat/domain/repositories/seat_hold_repository.dart';
+import '../features/showtime_and_seat/presentation/view_models/showtime_view_model.dart';
 import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
 import '../features/showtime_and_seat/presentation/view_models/seat_selection_view_model.dart';
@@ -69,10 +77,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/showtimes/:movieId',
       builder: (context, state) {
+        final movieId = state.pathParameters['movieId']!;
         final extra = state.extra;
-        return ShowtimeSelectionScreen(
-          movieId: state.pathParameters['movieId']!,
-          movieTitle: extra is String ? extra : 'null',
+        // ViewModel theo route để suất chiếu của phim trước không hiện lại.
+        return ChangeNotifierProvider<ShowtimeViewModel>(
+          create: (context) =>
+              ShowtimeViewModel(
+                  context.read<ShowtimeRepository>(),
+                  context.read<MovieRepository>(),
+                )
+                ..loadMovie(movieId)
+                ..load(movieId, DateUtils.dateOnly(DateTime.now())),
+          child: ShowtimeSelectionScreen(
+            movieId: movieId,
+            movieTitle: extra is String ? extra : null,
+          ),
         );
       },
     ),
@@ -91,7 +110,23 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/tickets',
-      builder: (context, state) => const _FeaturePlaceholder(title: 'Tickets'),
+      builder: (context, state) =>
+          ChangeNotifierProvider<CustomerTicketsViewModel>(
+            create: (_) => CustomerTicketsViewModel()..loadTickets(),
+            child: const MyTicketsScreen(),
+          ),
+      routes: [
+        GoRoute(
+          path: ':ticketId',
+          builder: (context, state) {
+            final ticketId = state.pathParameters['ticketId']!;
+            return ChangeNotifierProvider<CustomerTicketsViewModel>(
+              create: (_) => CustomerTicketsViewModel()..loadTicket(ticketId),
+              child: CustomerTicketDetailScreen(ticketId: ticketId),
+            );
+          },
+        ),
+      ],
     ),
     GoRoute(
       path: '/booking-summary',
@@ -115,6 +150,19 @@ final appRouter = GoRouter(
           return BookingCreatedScreen(booking: booking);
         }
         return const _FeaturePlaceholder(title: 'Đặt vé');
+      },
+    ),
+    GoRoute(
+      path: '/demo-payment',
+      builder: (context, state) {
+        final booking = state.extra;
+        if (booking is CreatedBooking) {
+          return ChangeNotifierProvider<DemoPaymentViewModel>(
+            create: (_) => DemoPaymentViewModel(),
+            child: DemoPaymentScreen(booking: booking),
+          );
+        }
+        return const _FeaturePlaceholder(title: 'Thanh toán demo');
       },
     ),
   ],

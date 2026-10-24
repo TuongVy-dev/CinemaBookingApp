@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/api_config.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/api_result.dart';
 import '../../domain/entities/movie.dart';
@@ -69,8 +70,11 @@ class MovieRepositoryImpl implements MovieRepository {
   Failure _dioFailure(DioException error, {required String fallback}) {
     final statusCode = error.response?.statusCode;
     if (statusCode == null) {
+      final baseUrl = error.requestOptions.baseUrl.isNotEmpty
+          ? error.requestOptions.baseUrl
+          : ApiConfig.baseUrl;
       return Failure(
-        'Không thể kết nối máy chủ tại ${error.requestOptions.baseUrl}. '
+        'Không thể kết nối máy chủ tại $baseUrl. '
         'Kiểm tra API_BASE_URL và kết nối mạng rồi thử lại.',
       );
     }
