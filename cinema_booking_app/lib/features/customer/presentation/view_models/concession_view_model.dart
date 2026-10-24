@@ -236,6 +236,15 @@ class ConcessionsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearCart() {
+    if (_disposed || cart.isEmpty) {
+      return;
+    }
+
+    cart = {};
+    notifyListeners();
+  }
+
   void reset({bool clearCatalog = false}) {
     if (_disposed) {
       return;

@@ -97,7 +97,10 @@ class ConcessionCatalogScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => context.push('/cart'),
+                  onPressed: () {
+                    vm.clearCart();
+                    context.push('/cart', extra: hold);
+                  },
                   child: const Text('Bỏ qua'),
                 ),
               ),
