@@ -6,9 +6,13 @@ import '../view_models/concession_view_model.dart';
 import '../../../../core/ui/cinema_theme.dart';
 import '../../../../core/ui/cinema_widgets.dart';
 import '../../domain/entities/cinema_models.dart';
+import '../../../showtime_and_seat/domain/entities/seat_hold.dart';
+import '../../../showtime_and_seat/presentation/widgets/seat_hold_countdown.dart';
 
 class ConcessionCatalogScreen extends StatelessWidget {
-  const ConcessionCatalogScreen({super.key});
+  const ConcessionCatalogScreen({super.key, this.hold});
+
+  final SeatHold? hold;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,11 @@ class ConcessionCatalogScreen extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 390),
           child: Column(
             children: [
+              if (hold != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: SeatHoldCountdown(hold: hold!),
+                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Wrap(
@@ -95,7 +104,7 @@ class ConcessionCatalogScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => context.push('/cart'),
+                  onPressed: () => context.push('/cart', extra: hold),
                   child: Text('Xem giỏ (${vm.count})'),
                 ),
               ),

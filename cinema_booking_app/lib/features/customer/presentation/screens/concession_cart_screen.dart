@@ -4,9 +4,51 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/ui/cinema_widgets.dart';
 import '../view_models/concession_view_model.dart';
+import '../../../showtime_and_seat/domain/entities/seat_hold.dart';
+import '../../../showtime_and_seat/presentation/widgets/seat_hold_countdown.dart';
 
-class ConcessionCartScreen extends StatelessWidget {
-  const ConcessionCartScreen({super.key});
+class ConcessionCartScreen extends StatefulWidget {
+  const ConcessionCartScreen({super.key, this.hold});
+
+  final SeatHold? hold;
+
+  @override
+  State<ConcessionCartScreen> createState() => _ConcessionCartScreenState();
+}
+
+class _ConcessionCartScreenState extends State<ConcessionCartScreen> {
+  bool _previewStarted = false;
+
+  SeatHold? get hold => widget.hold;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleTicketPreview();
+  }
+
+  @override
+  void didUpdateWidget(ConcessionCartScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.hold?.holdId != widget.hold?.holdId ||
+        oldWidget.hold?.deadline != widget.hold?.deadline) {
+      _scheduleTicketPreview();
+    }
+  }
+
+  void _scheduleTicketPreview() {
+    _previewStarted = false;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _previewStarted = true);
+      context.read<ConcessionsViewModel>().loadTicketPreview(hold);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +62,11 @@ class ConcessionCartScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          if (hold != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: SeatHoldCountdown(hold: hold!),
+            ),
           const SectionHeading('Bắp & nước'),
           if (selected.isEmpty)
             const AsyncStateView(message: 'Giỏ bắp nước trống')
@@ -61,15 +108,52 @@ class ConcessionCartScreen extends StatelessWidget {
               if (context.canPop()) {
                 context.pop();
               } else {
-                context.go('/concessions');
+                context.go('/concessions', extra: hold);
               }
             },
             icon: const Icon(Icons.add),
             label: const Text('Thêm món'),
           ),
           const SectionHeading('Tạm tính'),
+
+          if (hold == null)
+            const Text('Chọn và giữ ghế để xem tổng tạm tính gồm tiền vé.')
+          else if (!_previewStarted || vm.ticketLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: LinearProgressIndicator(),
+            )
+          else if (vm.ticketError != null) ...[
+            Text(vm.ticketError!),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => context
+                    .read<ConcessionsViewModel>()
+                    .loadTicketPreview(hold),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Tải lại giá ghế'),
+              ),
+            ),
+          ] else if (vm.ticketSubtotal != null)
+            PriceLine('Tiền vé', vm.ticketSubtotal!),
+
           PriceLine('Bắp & nước', vm.foodSubtotal),
-          const Text('Backend sẽ xác nhận giá và tổng tiền khi tạo đơn.'),
+
+          if (hold != null &&
+              _previewStarted &&
+              !vm.ticketLoading &&
+              vm.ticketError == null &&
+              vm.previewTotal != null) ...[
+            const Divider(),
+            PriceLine('Tổng tạm tính', vm.previewTotal!, total: true),
+          ],
+
+          const SizedBox(height: 8),
+          const Text(
+            'Số tiền tạm tính chưa gồm giảm giá voucher. '
+            'Tổng thanh toán sẽ được hệ thống xác nhận khi tạo đơn.',
+          ),
         ],
       ),
     );

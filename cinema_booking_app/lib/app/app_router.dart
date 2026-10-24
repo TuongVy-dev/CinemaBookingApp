@@ -28,17 +28,26 @@ import '../features/showtime_and_seat/presentation/view_models/showtime_view_mod
 import '../features/showtime_and_seat/domain/repositories/seat_map_repository.dart';
 import '../features/showtime_and_seat/presentation/screens/seat_selection_screen.dart';
 import '../features/showtime_and_seat/presentation/view_models/seat_selection_view_model.dart';
+import '../features/showtime_and_seat/domain/entities/seat_hold.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/concessions',
-      builder: (context, state) => const ConcessionCatalogScreen(),
+      builder: (context, state) {
+        final extra = state.extra;
+
+        return ConcessionCatalogScreen(hold: extra is SeatHold ? extra : null);
+      },
     ),
     GoRoute(
       path: '/cart',
-      builder: (context, state) => const ConcessionCartScreen(),
+      builder: (context, state) {
+        final extra = state.extra;
+
+        return ConcessionCartScreen(hold: extra is SeatHold ? extra : null);
+      },
     ),
     GoRoute(
       path: '/login',

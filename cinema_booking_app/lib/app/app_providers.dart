@@ -71,8 +71,10 @@ class AppProviders extends StatelessWidget {
         },
       ),
       ChangeNotifierProxyProvider<AccountViewModel, ConcessionsViewModel>(
-        create: (context) =>
-            ConcessionsViewModel(context.read<ConcessionRepository>()),
+        create: (context) => ConcessionsViewModel(
+          context.read<ConcessionRepository>(),
+          seatMapRepository: context.read<SeatMapRepository>(),
+        ),
         update: (context, account, previous) {
           final catalog = previous!;
           final session = account.userSession;
