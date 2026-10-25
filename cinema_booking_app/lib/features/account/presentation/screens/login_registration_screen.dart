@@ -302,9 +302,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
     });
 
     final vm = context.read<AccountViewModel>();
-    final success = await vm.forgotPassword(
-      _email.text.trim(),
-    );
+    final success = await vm.forgotPassword(_email.text.trim());
     if (!mounted) return;
     setState(() => _submitting = false);
 
@@ -312,7 +310,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       setState(() => _isResetStep = true);
       showCinemaMessage(context, 'Mã xác thực đã được gửi về email của bạn!');
     } else {
-      String err = vm.error ??
+      String err =
+          vm.error ??
           'Không thể gửi email. Vui lòng kiểm tra lại địa chỉ email.';
       if (err.toLowerCase().contains('no account found')) {
         err = 'Không tìm thấy tài khoản với email này trên hệ thống.';

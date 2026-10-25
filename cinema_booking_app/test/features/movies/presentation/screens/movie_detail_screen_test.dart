@@ -7,9 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../watchlist/watchlist_test_fakes.dart';
 import '../../movie_test_fakes.dart';
 
-Widget _buildApp(FakeMovieRepository repository, String movieId) {
+Widget _buildApp(
+  FakeMovieRepository repository,
+  String movieId, {
+  FakeWatchlistRepository? watchlist,
+}) {
+  final watchlistRepository = watchlist ?? FakeWatchlistRepository();
   final router = GoRouter(
     initialLocation: '/movies/$movieId',
     routes: [
@@ -31,8 +37,13 @@ Widget _buildApp(FakeMovieRepository repository, String movieId) {
       ),
     ],
   );
-  return Provider<MovieRepository>.value(
-    value: repository,
+  return MultiProvider(
+    providers: [
+      Provider<MovieRepository>.value(value: repository),
+      ChangeNotifierProvider(
+        create: (_) => buildWatchlistViewModel(watchlistRepository),
+      ),
+    ],
     child: MaterialApp.router(routerConfig: router),
   );
 }
@@ -72,6 +83,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('showtimes:MV000009'), findsOneWidget);
+  });
+
+  testWidgets('bookmark button adds and removes the movie from watchlist', (
+    tester,
+  ) async {
+    final watchlist = FakeWatchlistRepository();
+    repository.detailResult = ApiResult.success(buildMovie(id: 'MV000009'));
+
+    usePhoneViewport(tester);
+    await tester.pumpWidget(
+      _buildApp(repository, 'MV000009', watchlist: watchlist),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Thêm vào watchlist'));
+    await tester.pumpAndSettle();
+    expect(watchlist.added, ['MV000009']);
+    expect(find.byTooltip('Bỏ khỏi watchlist'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Bỏ khỏi watchlist'));
+    await tester.pumpAndSettle();
+    expect(watchlist.removed, ['MV000009']);
+    expect(find.byTooltip('Thêm vào watchlist'), findsOneWidget);
   });
 
   testWidgets('not found hides retry', (tester) async {
