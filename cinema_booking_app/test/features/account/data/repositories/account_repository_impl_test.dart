@@ -47,7 +47,9 @@ class _MockAccountApiService extends AccountApiService {
   }
 
   @override
-  Future<Response<dynamic>> resetPassword(ResetPasswordRequestDto request) async {
+  Future<Response<dynamic>> resetPassword(
+    ResetPasswordRequestDto request,
+  ) async {
     if (exceptionToThrow != null) throw exceptionToThrow!;
     return Response(
       requestOptions: RequestOptions(path: '/api/auth/reset-password'),
@@ -101,57 +103,63 @@ void main() {
       expect(session.isAuthenticated, isTrue);
     });
 
-    test('forgotPassword extracts nested error.message on 404 EMAIL_NOT_FOUND', () async {
-      mockApiService.exceptionToThrow = DioException(
-        requestOptions: RequestOptions(path: '/api/auth/forgot-password'),
-        response: Response(
+    test(
+      'forgotPassword extracts nested error.message on 404 EMAIL_NOT_FOUND',
+      () async {
+        mockApiService.exceptionToThrow = DioException(
           requestOptions: RequestOptions(path: '/api/auth/forgot-password'),
-          statusCode: 404,
-          data: {
-            'error': {
-              'code': 'EMAIL_NOT_FOUND',
-              'message': 'No account found for this email.',
+          response: Response(
+            requestOptions: RequestOptions(path: '/api/auth/forgot-password'),
+            statusCode: 404,
+            data: {
+              'error': {
+                'code': 'EMAIL_NOT_FOUND',
+                'message': 'No account found for this email.',
+              },
             },
-          },
-        ),
-      );
+          ),
+        );
 
-      final result = await repository.forgotPassword('nonexistent@gmail.com');
+        final result = await repository.forgotPassword('nonexistent@gmail.com');
 
-      expect(result, isA<FailureResult>());
-      final failure = (result as FailureResult).failure;
-      expect(failure.message, equals('No account found for this email.'));
-      expect(failure.statusCode, equals(404));
-    });
+        expect(result, isA<FailureResult>());
+        final failure = (result as FailureResult).failure;
+        expect(failure.message, equals('No account found for this email.'));
+        expect(failure.statusCode, equals(404));
+      },
+    );
 
-    test('resetPassword extracts nested error.message on 400 INVALID_RESET_LINK', () async {
-      mockApiService.exceptionToThrow = DioException(
-        requestOptions: RequestOptions(path: '/api/auth/reset-password'),
-        response: Response(
+    test(
+      'resetPassword extracts nested error.message on 400 INVALID_RESET_LINK',
+      () async {
+        mockApiService.exceptionToThrow = DioException(
           requestOptions: RequestOptions(path: '/api/auth/reset-password'),
-          statusCode: 400,
-          data: {
-            'error': {
-              'code': 'INVALID_RESET_LINK',
-              'message': 'This reset link is no longer valid.',
+          response: Response(
+            requestOptions: RequestOptions(path: '/api/auth/reset-password'),
+            statusCode: 400,
+            data: {
+              'error': {
+                'code': 'INVALID_RESET_LINK',
+                'message': 'This reset link is no longer valid.',
+              },
             },
-          },
-        ),
-      );
+          ),
+        );
 
-      final result = await repository.resetPassword(
-        id: 'CS000001',
-        resetTimestamp: 1712000000000,
-        resetCode: 'invalid_code',
-        newPassword: 'NewPassword123!',
-        confirmPassword: 'NewPassword123!',
-      );
+        final result = await repository.resetPassword(
+          id: 'CS000001',
+          resetTimestamp: 1712000000000,
+          resetCode: 'invalid_code',
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'NewPassword123!',
+        );
 
-      expect(result, isA<FailureResult>());
-      final failure = (result as FailureResult).failure;
-      expect(failure.message, equals('This reset link is no longer valid.'));
-      expect(failure.statusCode, equals(400));
-    });
+        expect(result, isA<FailureResult>());
+        final failure = (result as FailureResult).failure;
+        expect(failure.message, equals('This reset link is no longer valid.'));
+        expect(failure.statusCode, equals(400));
+      },
+    );
 
     test('resetPassword extracts field details in failure.errors on 422 VALIDATION_ERROR', () async {
       mockApiService.exceptionToThrow = DioException(
@@ -163,9 +171,7 @@ void main() {
             'error': {
               'code': 'VALIDATION_ERROR',
               'message': 'Invalid request data',
-              'details': {
-                'confirmPassword': 'Passwords must match.',
-              },
+              'details': {'confirmPassword': 'Passwords must match.'},
             },
           },
         ),
@@ -183,7 +189,10 @@ void main() {
       final failure = (result as FailureResult).failure;
       expect(failure.statusCode, equals(422));
       expect(failure.errors, isNotNull);
-      expect(failure.errors!['confirmPassword'], equals('Passwords must match.'));
+      expect(
+        failure.errors!['confirmPassword'],
+        equals('Passwords must match.'),
+      );
     });
   });
 }

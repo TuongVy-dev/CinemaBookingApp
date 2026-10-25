@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../watchlist/watchlist_test_fakes.dart';
 import '../../movie_test_fakes.dart';
 
 Widget _buildApp(FakeMovieRepository repository) {
@@ -27,8 +28,15 @@ Widget _buildApp(FakeMovieRepository repository) {
       ),
     ],
   );
-  return ChangeNotifierProvider(
-    create: (_) => MovieDiscoveryViewModel(repository)..load(),
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (_) => MovieDiscoveryViewModel(repository)..load(),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => buildWatchlistViewModel(FakeWatchlistRepository()),
+      ),
+    ],
     child: MaterialApp.router(routerConfig: router),
   );
 }

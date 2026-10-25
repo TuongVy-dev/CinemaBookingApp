@@ -44,6 +44,10 @@ class ApiConfig {
   static String customerTicket(String ticketId) =>
       '$customerTickets/${Uri.encodeComponent(ticketId)}';
 
+  static const customerWatchlist = '/api/customer/watchlist';
+  static String customerWatchlistItem(String movieId) =>
+      '$customerWatchlist/${Uri.encodeComponent(movieId)}';
+
   static const publicMovies = '/api/public/movies';
   static const publicMovieDetail = '/api/public/movies/';
 

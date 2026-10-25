@@ -13,6 +13,11 @@ import '../features/movies/data/services/movie_api_service.dart';
 import '../features/movies/domain/repositories/movie_repository.dart';
 import '../features/movies/presentation/view_models/movie_discovery_view_model.dart';
 
+import '../features/watchlist/data/repositories/watchlist_repository_impl.dart';
+import '../features/watchlist/data/services/watchlist_api_service.dart';
+import '../features/watchlist/domain/repositories/watchlist_repository.dart';
+import '../features/watchlist/presentation/view_models/watchlist_view_model.dart';
+
 import '../features/showtime_and_seat/domain/repositories/showtime_repository.dart';
 import '../features/showtime_and_seat/data/repositories/showtime_repository_impl.dart';
 import '../features/showtime_and_seat/data/services/showtime_api_service.dart';
@@ -50,6 +55,23 @@ class AppProviders extends StatelessWidget {
       ),
       Provider<MovieRepository>(
         create: (_) => MovieRepositoryImpl(MovieApiService()),
+      ),
+      Provider<WatchlistRepository>(
+        create: (context) => WatchlistRepositoryImpl(
+          WatchlistApiService(dio: context.read<ApiClient>().dio),
+        ),
+      ),
+      ChangeNotifierProxyProvider<AccountViewModel, WatchlistViewModel>(
+        create: (context) =>
+            WatchlistViewModel(context.read<WatchlistRepository>()),
+        update: (context, account, previous) {
+          final session = account.userSession;
+          return previous!..syncSession(
+            account.loggedIn && session != null
+                ? '${session.userId ?? ''}:${session.username}'
+                : null,
+          );
+        },
       ),
       Provider<ShowtimeRepository>(
         create: (context) => ShowtimeRepositoryImpl(

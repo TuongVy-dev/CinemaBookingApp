@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/ui/cinema_theme.dart';
 import '../../../../core/ui/cinema_widgets.dart';
+import '../../../watchlist/presentation/widgets/watchlist_button.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/repositories/movie_repository.dart';
 import '../states/movie_discovery_state.dart';
@@ -81,6 +82,12 @@ class _MovieDetailView extends StatelessWidget {
             ),
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16, top: 7, bottom: 7),
+            child: WatchlistButton(movieId: movie.id, size: 42),
+          ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(
