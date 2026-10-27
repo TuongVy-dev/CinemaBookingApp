@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/ui/cinema_theme.dart';
 import '../../../../core/ui/cinema_widgets.dart';
+import '../../../watchlist/presentation/widgets/watchlist_button.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/entities/movie_schedule.dart';
 import '../states/movie_discovery_state.dart';
@@ -374,6 +375,11 @@ class _MovieGridCard extends StatelessWidget {
                     top: 8,
                     child: MovieRatingBadge(rating: movie.ageRating),
                   ),
+                Positioned(
+                  right: 5,
+                  top: 5,
+                  child: WatchlistButton(movieId: movie.id, size: 32),
+                ),
               ],
             ),
           ),

@@ -1,22 +1,22 @@
 class BookingSelection {
   const BookingSelection({
+    required this.holdId,
     required this.showtimeId,
     required this.showtimeSeatIds,
-    this.holdId,
     this.concessions = const [],
     this.voucherCode,
   });
 
+  final String holdId;
   final String showtimeId;
   final List<String> showtimeSeatIds;
-  final String? holdId;
   final List<ConcessionSelection> concessions;
   final String? voucherCode;
 
   BookingSelection copyWith({String? voucherCode}) => BookingSelection(
+    holdId: holdId,
     showtimeId: showtimeId,
     showtimeSeatIds: showtimeSeatIds,
-    holdId: holdId,
     concessions: concessions,
     voucherCode: voucherCode,
   );

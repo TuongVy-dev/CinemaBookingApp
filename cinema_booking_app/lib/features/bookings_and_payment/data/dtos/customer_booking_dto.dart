@@ -6,8 +6,7 @@ class CustomerBookingRequestDto {
   final BookingSelection selection;
 
   Map<String, dynamic> toJson() => {
-    if (selection.holdId?.trim().isNotEmpty == true)
-      'holdId': selection.holdId!.trim(),
+    'holdId': selection.holdId.trim(),
     'showtimeId': selection.showtimeId,
     'showtimeSeatIds': selection.showtimeSeatIds,
     'concessions': selection.concessions

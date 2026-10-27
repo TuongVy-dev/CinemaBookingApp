@@ -12,6 +12,7 @@ void main() {
 
     await viewModel.preview(
       const BookingSelection(
+        holdId: 'hold-1',
         showtimeId: 'ST000001',
         showtimeSeatIds: ['SS000001'],
       ),
@@ -27,6 +28,7 @@ void main() {
 
     final created = await viewModel.create(
       const BookingSelection(
+        holdId: 'hold-1',
         showtimeId: 'ST000001',
         showtimeSeatIds: ['SS000001'],
       ),
@@ -41,6 +43,7 @@ void main() {
     final repository = _FakeBookingRepository(deferCreate: true);
     final viewModel = BookingSummaryViewModel(repository);
     const selection = BookingSelection(
+      holdId: 'hold-1',
       showtimeId: 'ST000001',
       showtimeSeatIds: ['SS000001'],
     );

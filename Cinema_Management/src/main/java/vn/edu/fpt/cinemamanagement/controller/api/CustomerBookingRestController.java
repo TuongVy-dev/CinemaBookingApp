@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.edu.fpt.cinemamanagement.dto.request.CustomerBookingRequestDTO;
 import vn.edu.fpt.cinemamanagement.dto.request.DemoPaymentRequestDTO;
 import vn.edu.fpt.cinemamanagement.dto.response.CustomerBookingCreatedResponseDTO;
+import vn.edu.fpt.cinemamanagement.exception.SeatHoldException;
 import vn.edu.fpt.cinemamanagement.repositories.CustomerRepository;
 import vn.edu.fpt.cinemamanagement.services.CustomerBookingService;
 import vn.edu.fpt.cinemamanagement.services.CustomerDemoPaymentService;
@@ -68,10 +69,13 @@ public class CustomerBookingRestController {
 
     @PostMapping("/preview")
     public ResponseEntity<?> preview(Principal principal, @RequestBody CustomerBookingRequestDTO request) {
-        if (customerId(principal) == null) return unauthorized();
+        String customerId = customerId(principal);
+        if (customerId == null) return unauthorized();
         try {
-            return ResponseEntity.ok(bookingService.preview(request));
-        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.ok(bookingService.preview(customerId, request));
+        } catch (SeatHoldException exception) {
+            return holdError(exception);
+        } catch (IllegalArgumentException | IllegalStateException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
     }
@@ -107,7 +111,9 @@ public class CustomerBookingRestController {
                 idempotencyResponses.put(cacheKey, new IdempotencyEntry(fingerprint, created));
                 return ResponseEntity.status(HttpStatus.CREATED).body(created);
             }
-        } catch (IllegalArgumentException exception) {
+        } catch (SeatHoldException exception) {
+            return holdError(exception);
+        } catch (IllegalArgumentException | IllegalStateException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
     }
@@ -136,8 +142,17 @@ public class CustomerBookingRestController {
             }
         }
         return String.join("|", String.valueOf(request.getShowtimeId()),
+                String.valueOf(request.getHoldId()),
                 String.valueOf(request.getShowtimeSeatIds()),
                 String.join(",", concessions), String.valueOf(request.getVoucherCode()));
+    }
+
+    private ResponseEntity<Map<String, Object>> holdError(SeatHoldException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", exception.getCode());
+        body.put("message", exception.getMessage());
+        if (!exception.getSeatIds().isEmpty()) body.put("seatIds", exception.getSeatIds());
+        return ResponseEntity.status(exception.getStatus()).body(body);
     }
 
     private record IdempotencyEntry(String fingerprint, CustomerBookingCreatedResponseDTO response) {}

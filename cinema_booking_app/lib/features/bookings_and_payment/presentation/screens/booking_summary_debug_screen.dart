@@ -15,6 +15,7 @@ class BookingSummaryDebugScreen extends StatefulWidget {
 
 class _BookingSummaryDebugScreenState extends State<BookingSummaryDebugScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _holdId = TextEditingController();
   final _showtimeId = TextEditingController();
   final _seatIds = TextEditingController();
   final _concessionId = TextEditingController();
@@ -23,6 +24,7 @@ class _BookingSummaryDebugScreenState extends State<BookingSummaryDebugScreen> {
 
   @override
   void dispose() {
+    _holdId.dispose();
     _showtimeId.dispose();
     _seatIds.dispose();
     _concessionId.dispose();
@@ -36,6 +38,7 @@ class _BookingSummaryDebugScreenState extends State<BookingSummaryDebugScreen> {
     final concessionId = _concessionId.text.trim();
     final quantity = int.tryParse(_concessionQuantity.text.trim()) ?? 0;
     final selection = BookingSelection(
+      holdId: _holdId.text.trim(),
       showtimeId: _showtimeId.text.trim(),
       showtimeSeatIds: _seatIds.text
           .split(',')
@@ -70,6 +73,14 @@ class _BookingSummaryDebugScreenState extends State<BookingSummaryDebugScreen> {
           key: _formKey,
           child: Column(
             children: [
+              TextFormField(
+                controller: _holdId,
+                decoration: const InputDecoration(labelText: 'Hold ID'),
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Hold ID is required.'
+                    : null,
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _showtimeId,
                 decoration: const InputDecoration(labelText: 'Showtime ID'),

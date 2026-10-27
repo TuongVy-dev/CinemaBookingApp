@@ -1,6 +1,7 @@
 package vn.edu.fpt.cinemamanagement.services;
 
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import vn.edu.fpt.cinemamanagement.dto.request.CustomerBookingRequestDTO;
 import vn.edu.fpt.cinemamanagement.dto.response.CustomerBookingCreatedResponseDTO;
@@ -12,6 +13,7 @@ import vn.edu.fpt.cinemamanagement.entities.ShowtimeSeat;
 import vn.edu.fpt.cinemamanagement.entities.Voucher;
 import vn.edu.fpt.cinemamanagement.enums.BookingStatus;
 import vn.edu.fpt.cinemamanagement.enums.SeatStatus;
+import vn.edu.fpt.cinemamanagement.exception.SeatHoldException;
 import vn.edu.fpt.cinemamanagement.repositories.BookingDetailRepository;
 import vn.edu.fpt.cinemamanagement.repositories.BookingRepository;
 import vn.edu.fpt.cinemamanagement.repositories.ConcessionRepository;
@@ -35,6 +37,7 @@ public class CustomerBookingService {
     private final ConcessionRepository concessionRepository;
     private final VoucherRepository voucherRepository;
     private final ISeatPricingService seatPricingService;
+    private final CustomerSeatHoldService seatHoldService;
 
     public CustomerBookingService(
             BookingRepository bookingRepository,
@@ -43,7 +46,8 @@ public class CustomerBookingService {
             ShowtimeSeatRepository showtimeSeatRepository,
             ConcessionRepository concessionRepository,
             VoucherRepository voucherRepository,
-            ISeatPricingService seatPricingService
+            ISeatPricingService seatPricingService,
+            CustomerSeatHoldService seatHoldService
     ) {
         this.bookingRepository = bookingRepository;
         this.bookingDetailRepository = bookingDetailRepository;
@@ -52,20 +56,28 @@ public class CustomerBookingService {
         this.concessionRepository = concessionRepository;
         this.voucherRepository = voucherRepository;
         this.seatPricingService = seatPricingService;
+        this.seatHoldService = seatHoldService;
     }
 
-    @Transactional
-    public CustomerBookingQuoteResponseDTO preview(CustomerBookingRequestDTO request) {
-        PricedSelection selection = price(request);
+    @Transactional(dontRollbackOn = SeatHoldException.class)
+    public CustomerBookingQuoteResponseDTO preview(String customerId, CustomerBookingRequestDTO request) {
+        CustomerSeatHoldService.BookingHold hold = validateHold(customerId, request);
+        PricedSelection selection = price(request, hold);
         return selection.toQuote();
     }
 
-    @Transactional
+    @Transactional(dontRollbackOn = SeatHoldException.class)
     public synchronized CustomerBookingCreatedResponseDTO createBooking(
             String customerId,
             CustomerBookingRequestDTO request
     ) {
-        PricedSelection selection = price(request);
+        CustomerSeatHoldService.BookingHold hold = seatHoldService.consumeForBooking(
+                customerId,
+                request == null ? null : request.getHoldId(),
+                request == null ? null : request.getShowtimeId(),
+                request == null ? null : request.getShowtimeSeatIds()
+        );
+        PricedSelection selection = price(request, hold);
         Booking booking = new Booking();
         booking.setId(nextBookingId());
         booking.setUserId(customerId);
@@ -110,17 +122,39 @@ public class CustomerBookingService {
                 booking.getId(), booking.getStatus().name(), booking.getTotalAmount());
     }
 
-    private PricedSelection price(CustomerBookingRequestDTO request) {
+    private CustomerSeatHoldService.BookingHold validateHold(
+            String customerId,
+            CustomerBookingRequestDTO request
+    ) {
         validateRequest(request);
+        return seatHoldService.validateForBooking(
+                customerId,
+                request.getHoldId(),
+                request.getShowtimeId(),
+                request.getShowtimeSeatIds()
+        );
+    }
+
+    private PricedSelection price(
+            CustomerBookingRequestDTO request,
+            CustomerSeatHoldService.BookingHold hold
+    ) {
+        validateRequest(request);
+        if (!hold.showtimeId().equals(request.getShowtimeId())) {
+            throw new IllegalStateException("Seat hold does not match the showtime.");
+        }
         if (showtimeRepository.findByShowtimeId(request.getShowtimeId()) == null) {
             throw new IllegalArgumentException("Không tìm thấy suất chiếu.");
         }
         List<String> seatIds = uniqueSeatIds(request.getShowtimeSeatIds());
+        if (hold.seatIds().size() != seatIds.size() || !hold.seatIds().containsAll(seatIds)) {
+            throw new IllegalStateException("Seat hold does not match the selected seats.");
+        }
         List<ShowtimeSeat> seats = showtimeSeatRepository.findByShowtimeIdAndIdsForUpdate(
                 request.getShowtimeId(), seatIds);
         if (seats.size() != seatIds.size()) throw new IllegalArgumentException("Một số ghế không thuộc suất chiếu này.");
         for (ShowtimeSeat seat : seats) {
-            if (seat.getStatus() != SeatStatus.AVAILABLE) {
+            if (seat.getStatus() != SeatStatus.PENDING) {
                 throw new IllegalArgumentException("Ghế không còn trống: " + seatCode(seat));
             }
         }
@@ -177,6 +211,9 @@ public class CustomerBookingService {
     private void validateRequest(CustomerBookingRequestDTO request) {
         if (request == null || request.getShowtimeId() == null || request.getShowtimeId().isBlank()) {
             throw new IllegalArgumentException("Suất chiếu là bắt buộc.");
+        }
+        if (request.getHoldId() == null || request.getHoldId().isBlank()) {
+            throw new IllegalArgumentException("Seat hold is required.");
         }
         if (request.getShowtimeSeatIds() == null || request.getShowtimeSeatIds().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một ghế.");

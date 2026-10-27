@@ -5,11 +5,14 @@ import java.util.List;
 
 /** Input shared by the customer booking preview and confirmation endpoints. */
 public class CustomerBookingRequestDTO {
+    private String holdId;
     private String showtimeId;
     private List<String> showtimeSeatIds = new ArrayList<>();
     private List<ConcessionItemDTO> concessions = new ArrayList<>();
     private String voucherCode;
 
+    public String getHoldId() { return holdId; }
+    public void setHoldId(String holdId) { this.holdId = holdId; }
     public String getShowtimeId() { return showtimeId; }
     public void setShowtimeId(String showtimeId) { this.showtimeId = showtimeId; }
     public List<String> getShowtimeSeatIds() { return showtimeSeatIds; }
