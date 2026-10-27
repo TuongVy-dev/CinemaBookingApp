@@ -5,6 +5,7 @@ import 'package:cinema_booking_app/core/network/api_result.dart';
 import 'package:cinema_booking_app/features/watchlist/presentation/view_models/watchlist_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../movies/movie_test_fakes.dart';
 import '../../watchlist_test_fakes.dart';
 
 void main() {
@@ -18,12 +19,42 @@ void main() {
     return viewModel;
   }
 
-  test('loads saved movie ids when the session starts', () async {
-    repository.listResult = ApiResult.success({'MV000001'});
+  test('loads saved movies when the session starts', () async {
+    repository.saved.add(buildMovie(id: 'MV000001'));
     final viewModel = await signedIn();
 
     expect(viewModel.contains('MV000001'), isTrue);
     expect(viewModel.contains('MV000002'), isFalse);
+  });
+
+  test(
+    'savedMovies drops a removed movie at once and adds after reload',
+    () async {
+      repository.saved.addAll([
+        buildMovie(id: 'MV000001', title: 'A'),
+        buildMovie(id: 'MV000002', title: 'B'),
+      ]);
+      final viewModel = await signedIn();
+      expect(viewModel.savedMovies.map((m) => m.id), ['MV000001', 'MV000002']);
+
+      await viewModel.toggle('MV000001');
+      expect(viewModel.savedMovies.map((m) => m.id), ['MV000002']);
+
+      await viewModel.toggle('MV000003');
+      expect(viewModel.savedMovies.map((m) => m.id), ['MV000003', 'MV000002']);
+    },
+  );
+
+  test('a failed load keeps the movies already shown', () async {
+    repository.saved.add(buildMovie(id: 'MV000001'));
+    final viewModel = await signedIn();
+
+    repository.listFailure = ApiResult.failure(const Failure('Mất mạng'));
+    await viewModel.load();
+
+    expect(viewModel.status, WatchlistLoadStatus.failure);
+    expect(viewModel.loadError, 'Mất mạng');
+    expect(viewModel.savedMovies.map((m) => m.id), ['MV000001']);
   });
 
   test('toggle adds an unsaved movie and removes a saved one', () async {
@@ -48,7 +79,7 @@ void main() {
   });
 
   test('failed removal restores the saved movie', () async {
-    repository.listResult = ApiResult.success({'MV000001'});
+    repository.saved.add(buildMovie(id: 'MV000001'));
     final viewModel = await signedIn();
     repository.writeResult = ApiResult.failure(const Failure('Lỗi mạng'));
 
@@ -82,7 +113,7 @@ void main() {
   });
 
   test('logging out clears the saved movies', () async {
-    repository.listResult = ApiResult.success({'MV000001'});
+    repository.saved.add(buildMovie(id: 'MV000001'));
     final viewModel = await signedIn();
 
     viewModel.syncSession(null);

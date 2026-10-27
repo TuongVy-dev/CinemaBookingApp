@@ -1,4 +1,5 @@
 import 'package:cinema_booking_app/core/network/api_result.dart';
+import 'package:cinema_booking_app/features/movies/domain/entities/movie.dart';
 import 'package:cinema_booking_app/features/watchlist/data/repositories/watchlist_repository_impl.dart';
 import 'package:cinema_booking_app/features/watchlist/data/services/watchlist_api_service.dart';
 import 'package:dio/dio.dart';
@@ -42,14 +43,21 @@ ResponseBody _json(String body, int status) => ResponseBody.fromString(
 }
 
 void main() {
-  test('reads movie ids from the watchlist response', () async {
+  test('maps the watchlist response to movies in server order', () async {
     final (repository, _) = _build(
-      (_) => _json('[{"movieID":"MV000001"},{"movieID":"MV000002"}]', 200),
+      (_) => _json(
+        '[{"movieID":"MV000002","title":"B","genre":"Hành động"},'
+        '{"movieID":"MV000001","title":"A"}]',
+        200,
+      ),
     );
 
-    final result = await repository.getWatchlistMovieIds();
+    final result = await repository.getWatchlistMovies();
 
-    expect((result as Success<Set<String>>).data, {'MV000001', 'MV000002'});
+    final movies = (result as Success<List<Movie>>).data;
+    expect(movies.map((movie) => movie.id), ['MV000002', 'MV000001']);
+    expect(movies.first.title, 'B');
+    expect(movies.first.genres, ['Hành động']);
   });
 
   test('add uses PUT and remove uses DELETE on the movie path', () async {
