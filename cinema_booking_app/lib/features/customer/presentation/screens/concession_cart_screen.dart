@@ -6,6 +6,7 @@ import '../../../../core/ui/cinema_widgets.dart';
 import '../view_models/concession_view_model.dart';
 import '../../../showtime_and_seat/domain/entities/seat_hold.dart';
 import '../../../showtime_and_seat/presentation/widgets/seat_hold_countdown.dart';
+import '../../../bookings_and_payment/domain/entities/booking_summary.dart';
 
 class ConcessionCartScreen extends StatefulWidget {
   const ConcessionCartScreen({super.key, this.hold});
@@ -18,7 +19,7 @@ class ConcessionCartScreen extends StatefulWidget {
 
 class _ConcessionCartScreenState extends State<ConcessionCartScreen> {
   bool _previewStarted = false;
-
+  bool _openingSummary = false;
   SeatHold? get hold => widget.hold;
 
   @override
@@ -48,6 +49,49 @@ class _ConcessionCartScreenState extends State<ConcessionCartScreen> {
       setState(() => _previewStarted = true);
       context.read<ConcessionsViewModel>().loadTicketPreview(hold);
     });
+  }
+
+  Future<void> _openBookingSummary() async {
+    if (_openingSummary) {
+      return;
+    }
+
+    final currentHold = hold;
+
+    if (currentHold == null || currentHold.isExpiredAt(DateTime.now())) {
+      showCinemaMessage(
+        context,
+        'Vui lòng chọn và giữ ghế còn hạn trước khi tiếp tục.',
+        isError: true,
+      );
+      return;
+    }
+
+    final vm = context.read<ConcessionsViewModel>();
+
+    final selection = BookingSelection(
+      holdId: currentHold.holdId,
+      showtimeId: currentHold.showtimeId,
+      showtimeSeatIds: List<String>.of(currentHold.seatIds),
+      concessions: vm.cart.entries
+          .map(
+            (item) => ConcessionSelection(
+              concessionId: item.key,
+              quantity: item.value,
+            ),
+          )
+          .toList(),
+    );
+
+    setState(() => _openingSummary = true);
+
+    try {
+      await context.push<void>('/booking-summary', extra: selection);
+    } finally {
+      if (mounted) {
+        setState(() => _openingSummary = false);
+      }
+    }
   }
 
   @override
@@ -153,6 +197,16 @@ class _ConcessionCartScreenState extends State<ConcessionCartScreen> {
           const Text(
             'Số tiền tạm tính chưa gồm giảm giá voucher. '
             'Tổng thanh toán sẽ được hệ thống xác nhận khi tạo đơn.',
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _openingSummary || hold == null
+                  ? null
+                  : _openBookingSummary,
+              child: const Text('Tiếp tục'),
+            ),
           ),
         ],
       ),
