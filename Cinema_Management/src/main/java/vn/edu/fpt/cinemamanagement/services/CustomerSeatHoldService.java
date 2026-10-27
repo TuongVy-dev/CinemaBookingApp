@@ -1,10 +1,19 @@
 package vn.edu.fpt.cinemamanagement.services;
 
-import jakarta.transaction.Transactional;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import jakarta.transaction.Transactional;
 import vn.edu.fpt.cinemamanagement.dto.request.SeatHoldRequestDTO;
 import vn.edu.fpt.cinemamanagement.dto.response.SeatHoldResponseDTO;
 import vn.edu.fpt.cinemamanagement.entities.ShowtimeSeat;
@@ -13,14 +22,6 @@ import vn.edu.fpt.cinemamanagement.enums.SeatStatus;
 import vn.edu.fpt.cinemamanagement.exception.SeatHoldException;
 import vn.edu.fpt.cinemamanagement.repositories.ShowtimeRepository;
 import vn.edu.fpt.cinemamanagement.repositories.ShowtimeSeatRepository;
-
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Giữ ghế tạm thời cho khách trước khi tạo booking (UC-16).
@@ -98,6 +99,82 @@ public class CustomerSeatHoldService {
     @Transactional
     public synchronized void release(String customerId, String holdId) {
         releaseSeats(ownedHold(customerId, holdId));
+    }
+
+    /**
+     * Verifies that a server-owned hold belongs to the current customer, has
+     * not expired, and exactly matches the requested showtime and seats.
+     */
+    @Transactional(dontRollbackOn = SeatHoldException.class)
+    public synchronized BookingHold validateForBooking(
+            String customerId,
+            String holdId,
+            String showtimeId,
+            List<String> requestedSeatIds
+    ) {
+        if (holdId == null || holdId.isBlank()) {
+            throw new SeatHoldException(HttpStatus.BAD_REQUEST, "HOLD_REQUIRED", "Seat hold is required.");
+        }
+        if (showtimeId == null || showtimeId.isBlank() || requestedSeatIds == null || requestedSeatIds.isEmpty()) {
+            throw new SeatHoldException(HttpStatus.BAD_REQUEST, "INVALID_HOLD_SELECTION", "Held seat selection is invalid.");
+        }
+
+        SeatHold hold = ownedHold(customerId, holdId.trim());
+        if (!hold.expiresAt().isAfter(OffsetDateTime.now())) {
+            // Booking methods opt out of rollback for this exception, so the
+            // expired hold and its pending seats are released immediately.
+            releaseSeats(hold);
+            throw new SeatHoldException(HttpStatus.CONFLICT, "HOLD_EXPIRED", "Seat hold has expired.");
+        }
+
+        List<String> seatIds = uniqueSeatIds(requestedSeatIds);
+        if (!hold.showtimeId().equals(showtimeId.trim()) || !sameSeatIds(hold.seatIds(), seatIds)) {
+            throw new SeatHoldException(
+                    HttpStatus.CONFLICT,
+                    "HOLD_SELECTION_MISMATCH",
+                    "The showtime or seats do not match the seat hold."
+            );
+        }
+
+        List<ShowtimeSeat> seats = showtimeSeatRepository.findByShowtimeIdAndIdsForUpdate(
+                hold.showtimeId(), hold.seatIds());
+        if (seats.size() != hold.seatIds().size()) {
+            throw new SeatHoldException(HttpStatus.CONFLICT, "HOLD_INVALID", "Seat hold is no longer valid.");
+        }
+        List<String> invalidSeatIds = seats.stream()
+                .filter(seat -> seat.getStatus() != SeatStatus.PENDING)
+                .map(ShowtimeSeat::getShowtimeSeatID)
+                .toList();
+        if (!invalidSeatIds.isEmpty()) {
+            throw new SeatHoldException(
+                    HttpStatus.CONFLICT,
+                    "HOLD_INVALID",
+                    "Some held seats are no longer pending.",
+                    invalidSeatIds
+            );
+        }
+        return new BookingHold(hold.holdId(), hold.showtimeId(), hold.seatIds());
+    }
+
+    /**
+     * Removes a valid hold inside the enclosing booking transaction. On a
+     * rollback, removeHold restores it; on commit, expiry jobs cannot release
+     * seats now owned by the booking.
+     */
+    @Transactional(dontRollbackOn = SeatHoldException.class)
+    public synchronized BookingHold consumeForBooking(
+            String customerId,
+            String holdId,
+            String showtimeId,
+            List<String> requestedSeatIds
+    ) {
+        BookingHold bookingHold = validateForBooking(customerId, holdId, showtimeId, requestedSeatIds);
+        SeatHold hold = holds.get(bookingHold.holdId());
+        if (hold == null) {
+            throw new SeatHoldException(HttpStatus.CONFLICT, "HOLD_INVALID", "Seat hold is no longer valid.");
+        }
+        removeHold(hold);
+        return bookingHold;
     }
 
     @Transactional
@@ -185,6 +262,10 @@ public class CustomerSeatHoldService {
         return clean;
     }
 
+    private boolean sameSeatIds(List<String> expected, List<String> actual) {
+        return expected.size() == actual.size() && expected.containsAll(actual);
+    }
+
     private String seatCode(ShowtimeSeat seat) {
         return seat.getTemplateSeat().getRowLabel() + seat.getTemplateSeat().getSeatNumber();
     }
@@ -198,6 +279,13 @@ public class CustomerSeatHoldService {
     ) {
         SeatHoldResponseDTO toResponse(OffsetDateTime serverTime) {
             return new SeatHoldResponseDTO(holdId, showtimeId, seatIds, expiresAt, serverTime);
+        }
+    }
+
+    /** Server-trusted selection that was validated against an active hold. */
+    public record BookingHold(String holdId, String showtimeId, List<String> seatIds) {
+        public BookingHold {
+            seatIds = List.copyOf(seatIds);
         }
     }
 }

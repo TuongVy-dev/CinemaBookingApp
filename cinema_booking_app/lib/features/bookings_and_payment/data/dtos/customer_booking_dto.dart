@@ -6,6 +6,7 @@ class CustomerBookingRequestDto {
   final BookingSelection selection;
 
   Map<String, dynamic> toJson() => {
+    'holdId': selection.holdId,
     'showtimeId': selection.showtimeId,
     'showtimeSeatIds': selection.showtimeSeatIds,
     'concessions': selection.concessions
