@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/ui/cinema_theme.dart';
 import '../../../../core/ui/cinema_widgets.dart';
+import '../../../watchlist/presentation/view_models/watchlist_view_model.dart';
 import '../../../watchlist/presentation/widgets/watchlist_button.dart';
 import '../../domain/entities/movie.dart';
 import '../../domain/entities/movie_schedule.dart';
@@ -21,6 +22,19 @@ class MovieDiscoveryScreen extends StatefulWidget {
 
 class _MovieDiscoveryScreenState extends State<MovieDiscoveryScreen> {
   late final TextEditingController _searchController;
+
+  /// Tab "ĐÃ LƯU" chỉ là cách xem khác của UI, không phải lịch chiếu của server.
+  bool _showSaved = false;
+
+  void _selectSaved() {
+    setState(() => _showSaved = true);
+    context.read<WatchlistViewModel>().load();
+  }
+
+  void _selectSchedule(MovieSchedule schedule) {
+    setState(() => _showSaved = false);
+    context.read<MovieDiscoveryViewModel>().selectSchedule(schedule);
+  }
 
   @override
   void initState() {
@@ -62,7 +76,7 @@ class _MovieDiscoveryScreenState extends State<MovieDiscoveryScreen> {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(20, 18, 20, 12),
                   child: Row(
-                    children: [_MovieWordmark(), Spacer(), _MovieDemoBadge()],
+                    children: [_MovieWordmark(), Spacer()],
                   ),
                 ),
                 Padding(
@@ -96,35 +110,47 @@ class _MovieDiscoveryScreenState extends State<MovieDiscoveryScreen> {
                     children: [
                       _MovieScheduleTab(
                         label: 'ĐANG CHIẾU',
-                        selected: nowShowing,
-                        onTap: () =>
-                            vm.selectSchedule(MovieSchedule.nowShowing),
+                        selected: nowShowing && !_showSaved,
+                        onTap: () => _selectSchedule(MovieSchedule.nowShowing),
                       ),
-                      const SizedBox(width: 24),
+                      const SizedBox(width: 16),
                       _MovieScheduleTab(
                         label: 'SẮP CHIẾU',
-                        selected: !nowShowing,
-                        onTap: () =>
-                            vm.selectSchedule(MovieSchedule.comingSoon),
+                        selected: !nowShowing && !_showSaved,
+                        onTap: () => _selectSchedule(MovieSchedule.comingSoon),
+                      ),
+                      const SizedBox(width: 16),
+                      _MovieScheduleTab(
+                        label: 'MỤC YÊU THÍCH',
+                        selected: _showSaved,
+                        onTap: _selectSaved,
                       ),
                     ],
                   ),
                 ),
                 const Divider(height: 1, color: Color(0xFF2F2525)),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: Text(
-                    'Phân loại theo ngày phát hành so với hôm nay.',
-                    style: TextStyle(color: CinemaColors.muted, fontSize: 10),
+                if (_showSaved)
+                  const SizedBox(height: 14)
+                else ...[
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Text(
+                      'Phân loại theo ngày phát hành so với hôm nay.',
+                      style: TextStyle(color: CinemaColors.muted, fontSize: 10),
+                    ),
                   ),
+                  _MovieCategoryChips(
+                    categories: vm.categories,
+                    selected: state.category,
+                    onSelected: vm.selectCategory,
+                  ),
+                  const SizedBox(height: 7),
+                ],
+                Expanded(
+                  child: _showSaved
+                      ? _SavedMoviesBody(query: state.query)
+                      : _MovieGridBody(vm: vm),
                 ),
-                _MovieCategoryChips(
-                  categories: vm.categories,
-                  selected: state.category,
-                  onSelected: vm.selectCategory,
-                ),
-                const SizedBox(height: 7),
-                Expanded(child: _MovieGridBody(vm: vm)),
               ],
             ),
           ),
@@ -182,19 +208,101 @@ class _MovieGridBody extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: vm.load,
-      child: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        physics: const AlwaysScrollableScrollPhysics(),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        itemCount: movies.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.57,
+      child: _MovieGrid(movies: movies),
+    );
+  }
+}
+
+class _MovieGrid extends StatelessWidget {
+  const _MovieGrid({required this.movies});
+
+  final List<Movie> movies;
+
+  @override
+  Widget build(BuildContext context) => GridView.builder(
+    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+    physics: const AlwaysScrollableScrollPhysics(),
+    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+    itemCount: movies.length,
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 16,
+      childAspectRatio: 0.57,
+    ),
+    itemBuilder: (context, index) => _MovieGridCard(movie: movies[index]),
+  );
+}
+
+/// Phim khách đã lưu; dùng chung ô tìm kiếm với các tab còn lại.
+class _SavedMoviesBody extends StatelessWidget {
+  const _SavedMoviesBody({required this.query});
+
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    final watchlist = context.watch<WatchlistViewModel>();
+
+    if (!watchlist.isSignedIn) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const AsyncStateView(
+            icon: Icons.bookmark_border,
+            message: 'Đăng nhập để xem các phim đã lưu.',
+          ),
+          TextButton(
+            onPressed: () => context.push('/login'),
+            child: const Text('Đăng nhập'),
+          ),
+        ],
+      );
+    }
+
+    final needle = query.trim().toLowerCase();
+    final saved = watchlist.savedMovies;
+    final movies = needle.isEmpty
+        ? saved
+        : saved
+              .where((movie) => movie.title.toLowerCase().contains(needle))
+              .toList(growable: false);
+
+    if (saved.isEmpty &&
+        (watchlist.status == WatchlistLoadStatus.initial ||
+            watchlist.status == WatchlistLoadStatus.loading)) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (saved.isEmpty && watchlist.status == WatchlistLoadStatus.failure) {
+      return AsyncStateView(
+        message: watchlist.loadError ?? 'Không tải được watchlist.',
+        retry: watchlist.load,
+        icon: Icons.error_outline,
+      );
+    }
+    if (movies.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: watchlist.load,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: constraints.maxHeight,
+              child: AsyncStateView(
+                icon: Icons.bookmark_border,
+                message: saved.isEmpty
+                    ? 'Bạn chưa lưu phim nào. Bấm biểu tượng bookmark trên phim để lưu.'
+                    : 'Không tìm thấy phim phù hợp.',
+              ),
+            ),
+          ),
         ),
-        itemBuilder: (context, index) => _MovieGridCard(movie: movies[index]),
-      ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: watchlist.load,
+      child: _MovieGrid(movies: movies),
     );
   }
 }
@@ -278,33 +386,33 @@ class _MovieWordmark extends StatelessWidget {
   );
 }
 
-class _MovieDemoBadge extends StatelessWidget {
-  const _MovieDemoBadge();
+// class _MovieDemoBadge extends StatelessWidget {
+//   const _MovieDemoBadge();
 
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-    decoration: BoxDecoration(
-      border: Border.all(color: CinemaColors.warning),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.person_outline, color: CinemaColors.warning, size: 11),
-        SizedBox(width: 3),
-        Text(
-          'DEMO',
-          style: TextStyle(
-            color: CinemaColors.warning,
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
-    ),
-  );
-}
+//   @override
+//   Widget build(BuildContext context) => Container(
+//     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+//     decoration: BoxDecoration(
+//       border: Border.all(color: CinemaColors.warning),
+//       borderRadius: BorderRadius.circular(20),
+//     ),
+//     child: const Row(
+//       mainAxisSize: MainAxisSize.min,
+//       children: [
+//         Icon(Icons.person_outline, color: CinemaColors.warning, size: 11),
+//         SizedBox(width: 3),
+//         Text(
+//           'DEMO',
+//           style: TextStyle(
+//             color: CinemaColors.warning,
+//             fontSize: 9,
+//             fontWeight: FontWeight.w800,
+//           ),
+//         ),
+//       ],
+//     ),
+//   );
+// }
 
 class _MovieScheduleTab extends StatelessWidget {
   const _MovieScheduleTab({

@@ -19,8 +19,22 @@ extension MovieDtoMapper on MovieDto {
     ageRating: ageRating?.trim() ?? '',
     releaseDate: _parseDate(releaseDate),
     posterUrl: ApiConfig.resolveAssetUrl(img),
-    trailerUrl: (trailer?.trim().isEmpty ?? true) ? null : trailer!.trim(),
+    trailerUrl: _normalizeTrailerUrl(trailer),
   );
+}
+
+/// Admin nhập link tự do nên chuẩn hóa về URL http(s) mở được, hoặc `null`.
+String? _normalizeTrailerUrl(String? raw) {
+  final value = raw?.trim() ?? '';
+  if (value.isEmpty || value.contains(RegExp(r'\s'))) return null;
+  if (RegExp(r'^https?://', caseSensitive: false).hasMatch(value)) {
+    return value;
+  }
+  // File trailer do backend lưu, giống đường dẫn poster.
+  if (value.startsWith('/')) return ApiConfig.resolveAssetUrl(value);
+  // Thiếu scheme, ví dụ "youtu.be/abc" hoặc "www.youtube.com/watch?v=abc".
+  if (value.contains('.') && !value.contains('://')) return 'https://$value';
+  return null;
 }
 
 DateTime? _parseDate(String? value) {

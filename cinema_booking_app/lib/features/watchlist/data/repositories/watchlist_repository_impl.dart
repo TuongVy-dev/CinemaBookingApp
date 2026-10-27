@@ -3,6 +3,9 @@ import 'package:dio/dio.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/api_result.dart';
+import '../../../movies/data/dtos/movie_dto.dart';
+import '../../../movies/data/mappers/movie_mapper.dart';
+import '../../../movies/domain/entities/movie.dart';
 import '../../domain/repositories/watchlist_repository.dart';
 import '../services/watchlist_api_service.dart';
 
@@ -12,22 +15,18 @@ class WatchlistRepositoryImpl implements WatchlistRepository {
   final WatchlistApiService _apiService;
 
   @override
-  Future<ApiResult<Set<String>>> getWatchlistMovieIds() async {
+  Future<ApiResult<List<Movie>>> getWatchlistMovies() async {
     try {
       final response = await _apiService.getWatchlist();
       final data = response.data;
       if (data is! List) {
         throw const FormatException('Expected a JSON array of movies.');
       }
-      final ids = <String>{};
-      for (final item in data.whereType<Map<String, dynamic>>()) {
-        final id = item['movieID'] ?? item['movieId'] ?? item['id'];
-        if (id == null) {
-          throw const FormatException('Watchlist item is missing movieID.');
-        }
-        ids.add(id.toString());
-      }
-      return ApiResult.success(ids);
+      final movies = data
+          .whereType<Map<String, dynamic>>()
+          .map((json) => MovieDto.fromJson(json).toEntity())
+          .toList(growable: false);
+      return ApiResult.success(movies);
     } on DioException catch (error) {
       return ApiResult.failure(
         _dioFailure(error, fallback: 'Không tải được watchlist.'),

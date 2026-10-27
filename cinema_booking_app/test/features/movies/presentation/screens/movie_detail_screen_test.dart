@@ -1,5 +1,6 @@
 import 'package:cinema_booking_app/core/errors/failures.dart';
 import 'package:cinema_booking_app/core/network/api_result.dart';
+import 'package:cinema_booking_app/features/movies/data/services/trailer_launcher.dart';
 import 'package:cinema_booking_app/features/movies/domain/repositories/movie_repository.dart';
 import 'package:cinema_booking_app/features/movies/presentation/screens/movie_detail_screen.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ Widget _buildApp(
   FakeMovieRepository repository,
   String movieId, {
   FakeWatchlistRepository? watchlist,
+  FakeTrailerLauncher? trailerLauncher,
 }) {
   final watchlistRepository = watchlist ?? FakeWatchlistRepository();
   final router = GoRouter(
@@ -40,6 +42,9 @@ Widget _buildApp(
   return MultiProvider(
     providers: [
       Provider<MovieRepository>.value(value: repository),
+      Provider<TrailerLauncher>.value(
+        value: trailerLauncher ?? FakeTrailerLauncher(),
+      ),
       ChangeNotifierProvider(
         create: (_) => buildWatchlistViewModel(watchlistRepository),
       ),
@@ -106,6 +111,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(watchlist.removed, ['MV000009']);
     expect(find.byTooltip('Thêm vào watchlist'), findsOneWidget);
+  });
+
+  testWidgets('trailer button opens the stored trailer link', (tester) async {
+    final launcher = FakeTrailerLauncher();
+    repository.detailResult = ApiResult.success(
+      buildMovie(trailerUrl: 'https://youtu.be/abc123'),
+    );
+
+    usePhoneViewport(tester);
+    await tester.pumpWidget(
+      _buildApp(repository, 'MV000001', trailerLauncher: launcher),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Xem trailer'));
+    await tester.pumpAndSettle();
+
+    expect(launcher.opened, ['https://youtu.be/abc123']);
+  });
+
+  testWidgets('trailer that cannot be opened shows an error', (tester) async {
+    final launcher = FakeTrailerLauncher()..result = false;
+    repository.detailResult = ApiResult.success(
+      buildMovie(trailerUrl: 'https://youtu.be/abc123'),
+    );
+
+    usePhoneViewport(tester);
+    await tester.pumpWidget(
+      _buildApp(repository, 'MV000001', trailerLauncher: launcher),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Xem trailer'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Không mở được trailer. Vui lòng thử lại sau.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('movie without trailer disables the button', (tester) async {
+    final launcher = FakeTrailerLauncher();
+    repository.detailResult = ApiResult.success(buildMovie());
+
+    usePhoneViewport(tester);
+    await tester.pumpWidget(
+      _buildApp(repository, 'MV000001', trailerLauncher: launcher),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Chưa có trailer'));
+    await tester.pumpAndSettle();
+
+    expect(launcher.opened, isEmpty);
   });
 
   testWidgets('not found hides retry', (tester) async {

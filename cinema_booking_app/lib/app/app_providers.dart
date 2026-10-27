@@ -10,6 +10,7 @@ import '../features/customer/domain/repositories/concession_repository.dart';
 import '../features/customer/presentation/view_models/concession_view_model.dart';
 import '../features/movies/data/repositories/movie_repository_impl.dart';
 import '../features/movies/data/services/movie_api_service.dart';
+import '../features/movies/data/services/trailer_launcher.dart';
 import '../features/movies/domain/repositories/movie_repository.dart';
 import '../features/movies/presentation/view_models/movie_discovery_view_model.dart';
 
@@ -52,6 +53,9 @@ class AppProviders extends StatelessWidget {
         create: (context) => SeatHoldRepositoryImpl(
           SeatHoldApiService(context.read<ApiClient>().dio),
         ),
+      ),
+      Provider<TrailerLauncher>(
+        create: (_) => const UrlLauncherTrailerLauncher(),
       ),
       Provider<MovieRepository>(
         create: (_) => MovieRepositoryImpl(MovieApiService()),

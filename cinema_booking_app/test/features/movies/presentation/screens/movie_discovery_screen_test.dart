@@ -11,7 +11,11 @@ import 'package:provider/provider.dart';
 import '../../../watchlist/watchlist_test_fakes.dart';
 import '../../movie_test_fakes.dart';
 
-Widget _buildApp(FakeMovieRepository repository) {
+Widget _buildApp(
+  FakeMovieRepository repository, {
+  FakeWatchlistRepository? watchlist,
+  bool signedIn = true,
+}) {
   final router = GoRouter(
     initialLocation: '/movies',
     routes: [
@@ -34,7 +38,10 @@ Widget _buildApp(FakeMovieRepository repository) {
         create: (_) => MovieDiscoveryViewModel(repository)..load(),
       ),
       ChangeNotifierProvider(
-        create: (_) => buildWatchlistViewModel(FakeWatchlistRepository()),
+        create: (_) => buildWatchlistViewModel(
+          watchlist ?? FakeWatchlistRepository(),
+          signedIn: signedIn,
+        ),
       ),
     ],
     child: MaterialApp.router(routerConfig: router),
@@ -146,5 +153,59 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hiện chưa có phim đang chiếu.'), findsOneWidget);
+  });
+
+  testWidgets('saved tab lists the movies in the watchlist', (tester) async {
+    final watchlist = FakeWatchlistRepository()
+      ..saved.add(buildMovie(id: 'MV000009', title: 'Phim đã lưu'));
+    usePhoneViewport(tester);
+    await tester.pumpWidget(_buildApp(repository, watchlist: watchlist));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Phim đã lưu'), findsOneWidget);
+    expect(find.text('Inside Out 2'), findsNothing);
+  });
+
+  testWidgets('saved tab shows an empty message', (tester) async {
+    usePhoneViewport(tester);
+    await tester.pumpWidget(_buildApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Bạn chưa lưu phim nào'), findsOneWidget);
+  });
+
+  testWidgets('removing a movie on the saved tab drops it from the grid', (
+    tester,
+  ) async {
+    final watchlist = FakeWatchlistRepository()
+      ..saved.add(buildMovie(id: 'MV000009', title: 'Phim đã lưu'));
+    usePhoneViewport(tester);
+    await tester.pumpWidget(_buildApp(repository, watchlist: watchlist));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Bỏ khỏi watchlist'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Phim đã lưu'), findsNothing);
+    expect(watchlist.removed, ['MV000009']);
+  });
+
+  testWidgets('saved tab asks a guest to sign in', (tester) async {
+    usePhoneViewport(tester);
+    await tester.pumpWidget(_buildApp(repository, signedIn: false));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Đăng nhập để xem các phim đã lưu.'), findsOneWidget);
   });
 }

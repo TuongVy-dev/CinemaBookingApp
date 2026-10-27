@@ -7,6 +7,7 @@ import '../../../../core/ui/cinema_theme.dart';
 import '../../../../core/ui/cinema_widgets.dart';
 import '../../../watchlist/presentation/widgets/watchlist_button.dart';
 import '../../domain/entities/movie.dart';
+import '../../data/services/trailer_launcher.dart';
 import '../../domain/repositories/movie_repository.dart';
 import '../states/movie_discovery_state.dart';
 import '../view_models/movie_detail_view_model.dart';
@@ -173,9 +174,21 @@ class _MovieDetailContent extends StatelessWidget {
 
   final Movie movie;
 
+  Future<void> _openTrailer(BuildContext context, String url) async {
+    final opened = await context.read<TrailerLauncher>().open(url);
+    if (!opened && context.mounted) {
+      showCinemaMessage(
+        context,
+        'Không mở được trailer. Vui lòng thử lại sau.',
+        isError: true,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final releaseDate = movie.releaseDate;
+    final trailerUrl = movie.trailerUrl;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -225,10 +238,11 @@ class _MovieDetailContent extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         OutlinedButton.icon(
-          onPressed: () =>
-              showCinemaMessage(context, 'Trailer hiện chỉ là giao diện demo.'),
+          onPressed: trailerUrl == null
+              ? null
+              : () => _openTrailer(context, trailerUrl),
           icon: const Icon(Icons.play_circle_outline, size: 18),
-          label: const Text('Xem trailer'),
+          label: Text(trailerUrl == null ? 'Chưa có trailer' : 'Xem trailer'),
           style: OutlinedButton.styleFrom(
             foregroundColor: CinemaColors.text,
             backgroundColor: CinemaColors.surface,
