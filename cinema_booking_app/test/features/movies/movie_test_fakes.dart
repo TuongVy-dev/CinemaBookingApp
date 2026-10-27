@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cinema_booking_app/core/errors/failures.dart';
 import 'package:cinema_booking_app/core/network/api_result.dart';
+import 'package:cinema_booking_app/features/movies/data/services/trailer_launcher.dart';
 import 'package:cinema_booking_app/features/movies/domain/entities/movie.dart';
 import 'package:cinema_booking_app/features/movies/domain/entities/movie_schedule.dart';
 import 'package:cinema_booking_app/features/movies/domain/repositories/movie_repository.dart';
@@ -22,6 +23,7 @@ Movie buildMovie({
   List<String> genres = const ['Khoa học viễn tưởng', 'Phiêu lưu'],
   String ageRating = 'T13',
   DateTime? releaseDate,
+  String? trailerUrl,
 }) => Movie(
   id: id,
   title: title,
@@ -30,6 +32,7 @@ Movie buildMovie({
   durationMinutes: 120,
   ageRating: ageRating,
   releaseDate: releaseDate ?? DateTime(2026, 9, 12),
+  trailerUrl: trailerUrl,
 );
 
 /// Repository giả; mỗi lời gọi có thể trả ngay hoặc chờ [Completer] để
@@ -58,5 +61,16 @@ class FakeMovieRepository implements MovieRepository {
   Future<ApiResult<Movie>> getMovieDetail(String movieId) async {
     requestedMovieIds.add(movieId);
     return detailResult;
+  }
+}
+
+class FakeTrailerLauncher implements TrailerLauncher {
+  bool result = true;
+  final List<String> opened = [];
+
+  @override
+  Future<bool> open(String url) async {
+    opened.add(url);
+    return result;
   }
 }

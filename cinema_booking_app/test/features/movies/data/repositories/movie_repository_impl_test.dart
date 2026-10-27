@@ -95,6 +95,28 @@ void main() {
       expect(movie.trailerUrl, isNull);
     });
 
+    test('normalizes the trailer link stored by admin', () async {
+      final cases = <String, String?>{
+        ' https://youtu.be/abc ': 'https://youtu.be/abc',
+        'youtu.be/abc': 'https://youtu.be/abc',
+        '/assets/trailers/dune.mp4':
+            '${ApiConfig.baseUrl}/assets/trailers/dune.mp4',
+        'khong phai link': null,
+        'abc123': null,
+        '': null,
+      };
+      for (final entry in cases.entries) {
+        api.listResponse = [
+          {..._movieJson, 'trailer': entry.key},
+        ];
+
+        final result = await repository.getMovies(MovieSchedule.nowShowing);
+
+        final movie = (result as Success<List<Movie>>).data.single;
+        expect(movie.trailerUrl, entry.value, reason: 'trailer "${entry.key}"');
+      }
+    });
+
     test('accepts LocalDate serialized as array', () async {
       api.listResponse = [
         {
