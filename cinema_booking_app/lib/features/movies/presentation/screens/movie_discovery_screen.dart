@@ -75,9 +75,7 @@ class _MovieDiscoveryScreenState extends State<MovieDiscoveryScreen> {
               children: [
                 const Padding(
                   padding: EdgeInsets.fromLTRB(20, 18, 20, 12),
-                  child: Row(
-                    children: [_MovieWordmark(), Spacer()],
-                  ),
+                  child: Row(children: [_MovieWordmark(), Spacer()]),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -104,7 +102,9 @@ class _MovieDiscoveryScreenState extends State<MovieDiscoveryScreen> {
                   ),
                 ),
                 const SizedBox(height: 11),
-                Padding(
+                // Scrolls instead of overflowing on narrow screens or large system fonts.
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [

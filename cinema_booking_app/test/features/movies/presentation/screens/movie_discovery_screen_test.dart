@@ -162,7 +162,7 @@ void main() {
     await tester.pumpWidget(_buildApp(repository, watchlist: watchlist));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.tap(find.text('MỤC YÊU THÍCH'));
     await tester.pumpAndSettle();
 
     expect(find.text('Phim đã lưu'), findsOneWidget);
@@ -174,7 +174,7 @@ void main() {
     await tester.pumpWidget(_buildApp(repository));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.tap(find.text('MỤC YÊU THÍCH'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Bạn chưa lưu phim nào'), findsOneWidget);
@@ -188,7 +188,7 @@ void main() {
     usePhoneViewport(tester);
     await tester.pumpWidget(_buildApp(repository, watchlist: watchlist));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.tap(find.text('MỤC YÊU THÍCH'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Bỏ khỏi watchlist'));
@@ -203,7 +203,7 @@ void main() {
     await tester.pumpWidget(_buildApp(repository, signedIn: false));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('ĐÃ LƯU'));
+    await tester.tap(find.text('MỤC YÊU THÍCH'));
     await tester.pumpAndSettle();
 
     expect(find.text('Đăng nhập để xem các phim đã lưu.'), findsOneWidget);
