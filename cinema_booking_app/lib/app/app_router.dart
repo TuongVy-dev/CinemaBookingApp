@@ -13,7 +13,6 @@ import '../features/bookings_and_payment/presentation/screens/booking_created_sc
 import '../features/bookings_and_payment/presentation/screens/customer_ticket_detail_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/demo_payment_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/my_tickets_screen.dart';
-import '../features/bookings_and_payment/presentation/screens/booking_summary_debug_screen.dart';
 import '../features/bookings_and_payment/presentation/screens/booking_summary_screen.dart';
 import '../features/bookings_and_payment/presentation/view_models/demo_payment_view_model.dart';
 import '../features/bookings_and_payment/presentation/view_models/customer_tickets_view_model.dart';
@@ -146,10 +145,6 @@ final appRouter = GoRouter(
         }
         return const _FeaturePlaceholder(title: 'Booking summary');
       },
-    ),
-    GoRoute(
-      path: '/booking-summary-debug',
-      builder: (context, state) => const BookingSummaryDebugScreen(),
     ),
     GoRoute(
       path: '/booking-created',
